@@ -1,0 +1,10 @@
+{
+"SpaProxyServer": {
+"ServerUrl": "https://localhost:51339",
+"RedirectUrl": "",
+"LaunchCommand": "npm run dev",
+"WorkingDirectory": "C:\\Users\\Nelesvopstal\\OneDrive\\School_Fontys\\05_Audiform online service- en bestelportaal\\97_nieuw_audiform\\Audiform\\Audiform.Server\\..\\audiform.client",
+"MaxTimeoutInSeconds": "120",
+"KeepRunning": "false"
+}
+}
