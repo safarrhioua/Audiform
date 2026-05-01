@@ -4,8 +4,9 @@ The following tools were used to generate this project:
 - create-vite
 
 The following steps were used to generate this project:
-- Create react project with create-vite: `npm init --yes vite@latest audiform.client -- --template=react`.
-- Update `vite.config.js` to set up proxying and certs.
+- Create react project with create-vite: `npm init --yes vite@latest audiform.client -- --template=react-ts  --no-rolldown --no-immediate`.
+- Update `vite.config.ts` to set up proxying and certs.
+- Add `@type/node` for `vite.config.js` typing.
 - Update `App` component to fetch and display weather information.
 - Create project file (`audiform.client.esproj`).
 - Create `launch.json` to enable debugging.
