@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113
+# Visual Studio Version 18
+VisualStudioVersion = 18.5.11716.220 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audiform", "Audiform\Audiform.csproj", "{F1DFACA0-D63C-4695-A4F6-88EC43690C2D}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{D8329970-10D7-4183-AB60-10F6293004AE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3. Domain", "3. Domain", "{56E90C48-D0CF-42DE-8EA3-54CEDE5D1925}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserTests", "UserTests\UserTests.csproj", "{5B6C6E89-D4F5-43BF-BEA8-DAEAD0B1F2F7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,10 @@ Global
 		{D8329970-10D7-4183-AB60-10F6293004AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8329970-10D7-4183-AB60-10F6293004AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8329970-10D7-4183-AB60-10F6293004AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B6C6E89-D4F5-43BF-BEA8-DAEAD0B1F2F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B6C6E89-D4F5-43BF-BEA8-DAEAD0B1F2F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B6C6E89-D4F5-43BF-BEA8-DAEAD0B1F2F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B6C6E89-D4F5-43BF-BEA8-DAEAD0B1F2F7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -50,5 +56,8 @@ Global
 		{291030A4-E40B-4E86-BCF6-2F60F8FE75F1} = {9F96D274-30C2-4528-BA10-AF778DA10094}
 		{04704F82-2FEC-4E69-ADAE-7278C3D948BD} = {20BCAD9C-EA50-44FC-AD01-6BC1612DDB5B}
 		{D8329970-10D7-4183-AB60-10F6293004AE} = {56E90C48-D0CF-42DE-8EA3-54CEDE5D1925}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {77E5B789-120C-4B4A-91C3-915395EFD152}
 	EndGlobalSection
 EndGlobal

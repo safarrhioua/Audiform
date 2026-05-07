@@ -3,32 +3,71 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace Application.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly UserManager<IdentityUser> _usermanager;
-        private readonly SignInManager<IdentityUser> _signinmanager;
+        private readonly UserManager<ApplicationUser> _usermanager;
+        private readonly SignInManager<ApplicationUser> _signinmanager;
+        private readonly IConfiguration _config;
 
-        public AuthService(UserManager<IdentityUser> usermanager, SignInManager<IdentityUser> signinmanager)
+        public AuthService(UserManager<ApplicationUser> usermanager, SignInManager<ApplicationUser> signinmanager, IConfiguration config)
         {
             _usermanager = usermanager;
             _signinmanager = signinmanager;
+            _config = config;
         }
 
-        public Task<AuthResult> LoginUserAsync(UserDto userdto)
-        {
-            return //; 
-        }
 
-        public Task<AuthResult> RegisterUserAsync(UserDto userDto)
+
+        public async Task<AuthResult> RegisterUserAsync(ApplicationUser user)
         {
-            var newuser = new IdentityUser
+            var newuser = new ApplicationUser
             {
-                UserName = userDto.Email
+                
+                Name = user.Name,
+                Email = user.Email,
+                Phonenumber = user.Phonenumber,
+
 
             };
+
+            var result = await _usermanager.CreateAsync(newuser, user.Password);
+
+            if (result.Succeeded)
+                return AuthResult.SuccessResult(true, "You are registered!");
+            else
+            {
+                return AuthResult.FailedResult(false, "The registration is failed!");
+            }
+        }
+        public async Task<AuthResult> LoginUserAsync(ApplicationUser user)
+        {
+            var loggedinUser = await _usermanager.FindByEmailAsync(user.Email);
+            if (loggedinUser == null)
+                return AuthResult.FailedResult(false, "User not found.");
+
+            if (!await _usermanager.IsEmailConfirmedAsync(user))
+
+                return AuthResult.FailedResult(false, "User not found.");
+
+            var result = await _signinmanager.PasswordSignInAsync(user.Email, user.Password, user.RememberMe, lockoutOnFailure: false);
+            if (result.Succeeded)
+            {
+
+                return AuthResult.SuccessResult(true, "You are logged in!");
+
+            }
+            else
+            {
+                return AuthResult.FailedResult(false, "Login failed! Please check your credentials.");
+
+            }
         }
     }
 }
+    
