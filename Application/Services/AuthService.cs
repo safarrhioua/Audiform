@@ -48,6 +48,7 @@ namespace Application.Services
         public async Task<AuthResult> LoginUserAsync(ApplicationUser user)
         {
             var loggedinUser = await _usermanager.FindByEmailAsync(user.Email);
+
             if (loggedinUser == null)
                 return AuthResult.FailedResult(false, "User not found.");
 

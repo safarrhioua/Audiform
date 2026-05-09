@@ -33,13 +33,18 @@ namespace UserTests
             var result = await _authService.Object.RegisterUserAsync(user);
             Assert.Equal(expectedresult, result);
         }
-        //[Fact]
-        //public async Task LoginUserAsync()
-        //{
-        //    var user = new ApplicationUser
-        //    {
-        //        Name = "John Doe",
-        //        Email = "John@123",
-        //    };
+        [Fact]
+        public async Task LoginUserAsync()
+        {
+            var mockservice = new Mock<IAuthService>();
+            var usertest = new ApplicationUser
+            {
+                Email = "John@Doe",
+                Password = "Test142",
+                RememberMe = false
+
+            };
+            
+        }
     }
 }
