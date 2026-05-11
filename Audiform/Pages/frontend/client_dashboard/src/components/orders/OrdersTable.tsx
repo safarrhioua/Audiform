@@ -10,7 +10,7 @@ interface OrdersTableProps {
   orders: Order[];
 }
 
-const columns = ['Bestelnummer', 'Patiënt', 'Patiëntnummer', 'Besteldatum', 'Leverdatum', 'Status', 'Actie',] as const;
+const columns = ['Bestelnummer', 'Klant', 'Klantnummer', 'Besteldatum', 'Leverdatum', 'Status', 'Actie',] as const;
 
 export default function OrdersTable({ orders }: OrdersTableProps) {
   return (
