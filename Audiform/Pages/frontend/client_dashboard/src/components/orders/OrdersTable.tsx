@@ -4,16 +4,17 @@ import {
 } from '@mui/material';
 import OrderStatusChip from './OrderStatusChip';
 import type { Order } from '../../types/order';
+import SecondaryButton from '../buttons/SecondaryButton';
 
 interface OrdersTableProps {
   orders: Order[];
 }
 
-const columns = ['Bestelnummer', 'Patiënt', 'Patiëntnummer', 'Besteldatum', 'Leverdatum', 'Status'] as const;
+const columns = ['Bestelnummer', 'Patiënt', 'Patiëntnummer', 'Besteldatum', 'Leverdatum', 'Status', 'Actie',] as const;
 
 export default function OrdersTable({ orders }: OrdersTableProps) {
   return (
-    <TableContainer component={Paper} elevation={2}>
+    <TableContainer component={Paper} elevation={4}>
       <Table>
         <TableHead>
           <TableRow sx={{ backgroundColor: 'primary.main' }}>
@@ -36,6 +37,9 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
               <TableCell>{order.askedDeliveryDate}</TableCell>
               <TableCell>
                 <OrderStatusChip status={order.state.stateName} />
+              </TableCell>
+              <TableCell>
+                <SecondaryButton>Afgeleverd</SecondaryButton>
               </TableCell>
             </TableRow>
           ))}
