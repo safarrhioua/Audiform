@@ -19,7 +19,7 @@ export default function OrdersPage(){
 
   return (
     <Box>
-      <Typography gutterBottom sx={{ variant: 'h4',  fontWeight: 'bold'}}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
         Mijn Actieve Bestellingen
       </Typography>
       <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>

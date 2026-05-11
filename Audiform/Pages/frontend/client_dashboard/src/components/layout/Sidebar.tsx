@@ -6,6 +6,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import PersonIcon from '@mui/icons-material/Person';
 import type { ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import PrimaryButton from '../buttons/PrimaryButton';
 
 interface NavItem {
     label: string;
@@ -37,9 +38,10 @@ export default function Sidebar() {
                 },
             }}
         >
-            <Toolbar>
+            <Toolbar sx={{ flexDirection: 'column', alignItems: 'center', py: 2 }}>
                 <img src="/logo.svg" alt="logo" style={{ width: 200, marginBottom: 35 }} />
-                <Typography variant="h6" noWrap>Mijn Winkel</Typography>
+                <PrimaryButton>Maak bestelling</PrimaryButton>
+                <Typography variant="h5" noWrap sx={{ fontWeight: 'bold' }}>Mijn Overzicht</Typography>
             </Toolbar>
             <Box sx={{ overflow: 'auto' }}>
                 <List>
