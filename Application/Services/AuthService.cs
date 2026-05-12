@@ -23,26 +23,16 @@ namespace Application.Services
         }
 
 
-
-        public async Task<AuthResult> RegisterUserAsync(ApplicationUser user)
+        public async Task<AuthResult> RegisterUserAsync(ApplicationUser user, string password)
         {
-            var newuser = new ApplicationUser
-            {
-                
-                Name = user.Name,
-                Email = user.Email,
-                Phonenumber = user.Phonenumber,
-
-
-            };
-
-            var result = await _usermanager.CreateAsync(newuser, user.Password);
+            
+           var result = await _usermanager.CreateAsync(user, password);
 
             if (result.Succeeded)
                 return AuthResult.SuccessResult(true, "You are registered!");
             else
             {
-                return AuthResult.FailedResult(false, "The registration is failed!");
+                return AuthResult.FailedResult(false, string.Join("; ", result.Errors.Select(e => e.Description)));
             }
         }
         public async Task<AuthResult> LoginUserAsync(ApplicationUser user)
@@ -71,4 +61,3 @@ namespace Application.Services
         }
     }
 }
-    

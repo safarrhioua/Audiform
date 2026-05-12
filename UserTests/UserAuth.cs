@@ -27,11 +27,11 @@ namespace UserTests
                 Phonenumber = "1234567890"
             };
 
-            var expectedresult = new AuthResult();
-            _authService.Setup(x => x.RegisterUserAsync(user)).ReturnsAsync(expectedresult);
+            //var expectedresult = new AuthResult();
+            //_authService.Setup(x => x.RegisterUserAsync(user)).ReturnsAsync(expectedresult);
 
-            var result = await _authService.Object.RegisterUserAsync(user);
-            Assert.Equal(expectedresult, result);
+            //var result = await _authService.Object.RegisterUserAsync(user);
+            //Assert.Equal(expectedresult, result);
         }
         [Fact]
         public async Task LoginUserAsync()

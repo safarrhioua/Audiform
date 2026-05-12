@@ -6,7 +6,7 @@ namespace Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<AuthResult> RegisterUserAsync(ApplicationUser user);
+        Task<AuthResult> RegisterUserAsync(ApplicationUser user,string password);
         Task<AuthResult> LoginUserAsync(ApplicationUser user);
     }
 }
