@@ -11,7 +11,6 @@
     },
     "https": {
       "commandName": "Project",
-      "workingDirectory": "$(SolutionDir)\\audiform.presentation.client",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",

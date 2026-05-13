@@ -20,12 +20,12 @@ namespace UserTests
         public async Task RegisterUserAsync()
         {
             //user registration test case
-            var user = new ApplicationUser
-            {
-                Name = "John Doe",
-                Email = "John@123",
-                Phonenumber = "1234567890"
-            };
+            //var user = new ApplicationUser
+            //{
+            //    Name = "John Doe",
+            //    Email = "John@123",
+            //    Phonenumber = "1234567890"
+            //};
 
             //var expectedresult = new AuthResult();
             //_authService.Setup(x => x.RegisterUserAsync(user)).ReturnsAsync(expectedresult);
@@ -37,13 +37,13 @@ namespace UserTests
         public async Task LoginUserAsync()
         {
             var mockservice = new Mock<IAuthService>();
-            var usertest = new ApplicationUser
-            {
-                Email = "John@Doe",
-                Password = "Test142",
-                RememberMe = false
+            //var usertest = new ApplicationUser
+            //{
+            //    Email = "John@Doe",
+            //    Password = "Test142",
+            //    RememberMe = false
 
-            };
+            //};
             
         }
     }

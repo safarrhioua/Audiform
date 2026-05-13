@@ -46,7 +46,7 @@ namespace Application.Services
 
                 return AuthResult.FailedResult(false, "User not found.");
 
-            var result = await _signinmanager.PasswordSignInAsync(user.Email, user.Password, user.RememberMe, lockoutOnFailure: false);
+            var result = await _signinmanager.PasswordSignInAsync(user.Email, user.PasswordHash, user.PhoneNumberConfirmed, lockoutOnFailure: false);
             if (result.Succeeded)
             {
 
