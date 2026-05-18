@@ -8,5 +8,6 @@ namespace Application.Interfaces
     {
         Task<AuthResult> RegisterUserAsync(ApplicationUser user,string password);
         Task<AuthResult> LoginUserAsync(ApplicationUser user);
+        Task<AuthResult> ConfirmEmailAsync(string userId, string token);
     }
 }
