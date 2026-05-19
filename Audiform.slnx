@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/1. Presentation/">
+    <Project Path="audiform.client/audiform.client.esproj">
+      <Build />
+      <Deploy />
+    </Project>
+    <Project Path="Audiform.Server/Audiform.Server.csproj" />
+  </Folder>
+  <Folder Name="/2. Application/">
+    <Project Path="Application/Application.csproj" />
+  </Folder>
+  <Folder Name="/3. Domain/">
+    <Project Path="Domain/Domain.csproj" />
+  </Folder>
+  <Folder Name="/4. Infrastructure/">
+    <Project Path="Infrastructure/Infrastructure.csproj" />
+  </Folder>
+</Solution>

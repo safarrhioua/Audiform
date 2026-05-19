@@ -367,9 +367,7 @@ FodyWeavers.xsd
 # Config / secrets
 appsettings.Development.json
 appsettings.Local.json
-.env
-.env.*
-*.secrets.json
+.env*
 
 # Docker
 docker-compose.override.yml
@@ -380,24 +378,16 @@ db-data/
 
 # React / frontend
 node_modules/
-dist/
 build/
-coverage/
-.vite/
+dist/
 
 # Logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
 
 # VS Code
 .vscode/
+.vite/
 
 # OS
 .DS_Store
 Thumbs.db
-
-# test file
-Audiform.Server/Controllers/DevLoginController.cs
