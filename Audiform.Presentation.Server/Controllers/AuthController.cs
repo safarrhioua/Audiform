@@ -32,15 +32,15 @@ namespace Audiform.Presentation.Server.Controllers
         //}
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest registerrequest)
+        public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
         {
 
             var newuser = new ApplicationUser
             {
-                Email = registerrequest.Email,
-                UserName = registerrequest.Email
+                Email = request.Email,
+                UserName = request.Email
             };
-            var result = await _authService.RegisterUserAsync(newuser, registerrequest.Password);
+            var result = await _authService.RegisterUserAsync(newuser, request.Password);
 
             if (!result.Success)
                 return BadRequest(result);
@@ -61,10 +61,8 @@ namespace Audiform.Presentation.Server.Controllers
 
                 var result = await _authService.ConfirmEmailAsync(userId, token);
 
-                if (!result.Success)
-                {
-                    return BadRequest("Email confirmation failed. Please try again or contact support.");
-                }
+                if (result.Success)
+                    return Ok("EmailConfirmed");
 
                 
             }
@@ -73,27 +71,10 @@ namespace Audiform.Presentation.Server.Controllers
                 //this will log the exception details along with the userId for which the confirmation failed, you can also log the token if needed, but be cautious as it may contain sensitive information
                 _logger.LogError(ex, "Error confirming email for userId: {UserId}", userId);
               
+
             }
-            return Ok("Email confirmed successfully.");
+           
 
         }
-
-        [HttpPost("login")]
-          public async Task<IActionResult> LoginUser([FromBody] LoginRequest loginrequest)
-        {
-            var User = new ApplicationUser
-            {
-                Email = loginrequest.Email,
-                   
-            };
-
-            var result = await _authService.LoginUserAsync(User, loginrequest.Password);
-
-            if (!result.Success)
-                return BadRequest(result);
-            return Ok(result);
-        }
-
-
     } 
 }
