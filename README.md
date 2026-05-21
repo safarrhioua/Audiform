@@ -3,7 +3,7 @@
 ## 📌 Structuur
 Nieuw bestelportaal voor Audiform met een scheiding tussen frontend en backend.
 
-- Frontend: React (Vite)
+- Frontend: React (Vite) met Material UI
 - Backend: .NET (ASP.NET Core)
 - Architectuur: Clean Architecture (Application, Domain, Infrastructure)
 
