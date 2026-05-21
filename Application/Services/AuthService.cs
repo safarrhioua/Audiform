@@ -55,8 +55,6 @@ namespace Application.Services
             await _confirmationservice.SendRegisterationConfirmationEmailAsync(user.Email!, confirmationLink);
 
             return AuthResult.SuccessResult(true, "Jij bent geregistreerd! ");
-
-
         }
 
         public async Task<AuthResult> ConfirmEmailAsync(string userId, string token)
@@ -90,31 +88,27 @@ namespace Application.Services
             
             return AuthResult.FailedResult(false, "Email confirmation failed.");
         }
-        public async Task<AuthResult> LoginUserAsync(ApplicationUser user)
+
+        public async Task<AuthResult> LoginUserAsync(string email, string password)
         {
-            var loggedinUser = await _usermanager.FindByEmailAsync(user.Email);
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return AuthResult.FailedResult(false, "Email is required.");
+            }
+
+            var loggedinUser = await _usermanager.FindByEmailAsync(email);
 
             if (loggedinUser == null)
                 return AuthResult.FailedResult(false, "User not found.");
 
-            if (!await _usermanager.IsEmailConfirmedAsync(user))
-
+            if (!await _usermanager.IsEmailConfirmedAsync(loggedinUser))
                 return AuthResult.FailedResult(false, "User not found.");
 
-            var result = await _signinmanager.PasswordSignInAsync(user.Email, user.PasswordHash, user.PhoneNumberConfirmed, lockoutOnFailure: false);
+            var result = await _signinmanager.PasswordSignInAsync(loggedinUser.UserName, password, isPersistent: false, lockoutOnFailure: false);
             if (result.Succeeded)
-            {
-
                 return AuthResult.SuccessResult(true, "You are logged in!");
 
-            }
-            else
-            {
-                return AuthResult.FailedResult(false, "Login failed! Please check your credentials.");
-
-            }
+            return AuthResult.FailedResult(false, "Login failed! Please check your credentials.");
         }
-
-
     }
 }

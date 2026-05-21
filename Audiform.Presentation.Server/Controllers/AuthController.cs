@@ -73,8 +73,21 @@ namespace Audiform.Presentation.Server.Controllers
               
 
             }
+            return BadRequest("Email confirmation failed. Please try again.");
            
-
         }
+
+        [HttpPost("login")]
+
+        public async Task<IActionResult> Login([FromBody] LoginRequest loginrequest)
+        {
+                        
+            var result = await _authService.LoginUserAsync(loginrequest.Email, loginrequest.Password);
+            if (!result.Success)
+                return BadRequest(result);
+            return Ok(result);
+        }
+
+
     } 
 }
