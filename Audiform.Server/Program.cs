@@ -3,9 +3,10 @@ using Application.Interfaces;
 using Application.Services;
 using Infrastructure;
 using Infrastructure.Data;
-using Microsoft.AspNetCore.Identity;
+
 using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
