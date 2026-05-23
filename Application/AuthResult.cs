@@ -8,12 +8,12 @@
         //methods to create success and failed results
         public static AuthResult SuccessResult(bool success,string message)
         {
-            return new AuthResult { Success = true, Message = message }; 
+            return new AuthResult { Success = success, Message = message }; 
 
         }
         public static AuthResult FailedResult(bool success,string message)
         {
-            return new AuthResult { Success = false, Message = message }; 
+            return new AuthResult { Success = success, Message = message }; 
 
         }
 

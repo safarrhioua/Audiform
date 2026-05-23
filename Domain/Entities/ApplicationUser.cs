@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿    using Microsoft.AspNetCore.Identity;
 
-namespace Domain.Entities
-{
-    public class ApplicationUser : IdentityUser
-    {        
-       
+    namespace Domain.Entities
+    {
+        public class ApplicationUser : IdentityUser
+        {
+            public string Fullname { get; set; } = string.Empty;
+
+        }
     }
-}

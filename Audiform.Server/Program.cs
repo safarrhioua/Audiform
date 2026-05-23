@@ -70,7 +70,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend", policy =>
-        policy.WithOrigins("https://localhost:52914", "https://localhost:52915")
+        policy.WithOrigins("https://localhost:52914", "https://localhost:52915", "https://localhost:60942")
               .AllowCredentials()
               .AllowAnyHeader()
               .AllowAnyMethod());

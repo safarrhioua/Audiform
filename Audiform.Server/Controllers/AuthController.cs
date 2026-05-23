@@ -1,5 +1,6 @@
 ﻿using Application;
 using Application.Interfaces;
+using Audiform.Server.Requests;
 using Domain.Entities;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Net.WebSockets;
+using RegisterRequest = Audiform.Server.Requests.Registerrequest;
 
 namespace Audiform.Presentation.Server.Controllers
 {
@@ -25,47 +27,46 @@ namespace Audiform.Presentation.Server.Controllers
 
         }
 
-        //[HttpGet]
-        //public IActionResult Register()
-        //{
-        //    return View();
-
-        //}
-
+    
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
+        public async Task<IActionResult> RegisterUser([FromBody] Registerrequest request)
         {
 
             var newuser = new ApplicationUser
             {
+                Fullname = request.Fullname,
                 Email = request.Email,
                 UserName = request.Email
             };
             var result = await _authService.RegisterUserAsync(newuser, request.Password);
 
             if (!result.Success)
-                return BadRequest(result);
-            return Ok(result);
+            {
+                return BadRequest(result.Message);
+            }
+
+            return Ok(result.Message);
 
         }
-    
+      
 
-    [HttpGet]
+    [HttpGet ("ConfirmEmail")]
         public async Task<IActionResult> ConfirmEmailAsync(string userId, string token)
         {
             try
             {
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
                 {
-                    return BadRequest("Invalid confirmation link.");
+                    return BadRequest("Ongeldige bevestigingslink.");
                 }
-
+               
                 var result = await _authService.ConfirmEmailAsync(userId, token);
 
                 if (result.Success)
-                    return Ok("EmailConfirmed");
+                    return Redirect("https://localhost:60942/login?confirmed=true");
+                    
 
-                
+
             }
             catch (Exception ex)
             {
@@ -74,8 +75,16 @@ namespace Audiform.Presentation.Server.Controllers
               
 
             }
-            return BadRequest("Email confirmation failed. Please try again.");
+            return BadRequest("Bevestiging van e-mail mislukt. Probeer het opnieuw.");
            
+        }
+        [HttpPost("resend-confirmation")]
+        public async Task<IActionResult> ResendConfirmationEmail([FromBody] string email)
+        {
+            var result = await _authService.ResendConfirmationEmailAsync(email);
+            if (!result.Success)
+                return BadRequest(result.Message);
+            return Ok(result.Message);
         }
 
         [HttpPost("login")]
@@ -85,8 +94,8 @@ namespace Audiform.Presentation.Server.Controllers
                         
             var result = await _authService.LoginUserAsync(loginrequest.Email, loginrequest.Password);
             if (!result.Success)
-                return BadRequest(result);
-            return Ok(result);
+                return BadRequest(result.Message);
+            return Ok(result.Message);
         }
 
 

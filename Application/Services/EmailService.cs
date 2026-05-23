@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Net.Mail;
 using System.Net;
 using System.Data.SqlTypes;
+using Domain.Entities;
 
 namespace Application.Services
 {
@@ -14,6 +15,7 @@ namespace Application.Services
     {
 
         private readonly IConfiguration _config;
+        
 
         public EmailService(IConfiguration config)
         {
@@ -23,19 +25,21 @@ namespace Application.Services
         {
             string htmlcontent = $@"
 
+
     <html><body style='font-family: Arial, sans-serif; background-color: #f4f6f8; margin:0; padding:20px;'>
                   <div style='max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:8px;'>
-                    <h2 style='color:#333;'>Hello, {"firstName"}!</h2>
-                    <p style='font-size:16px; color:#555;'>Your account has been successfully created and your email is confirmed.</p>
+                    <h2 style='color:#333;'>Hallo,!</h2>
+                    <p style='font-size:16px; color:#555;'>Uw account is succesvol aangemaakt en uw e-mailadres is bevestigd.
+                    U kunt nu inloggen op uw account.</p>
                     <p style='text-align:center;'>
-                      <a href='{loginlink}' style='background:#198754; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;'>Login to Your Account</a>
+                      <a href='{loginlink}' style='background:#198754; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;'>Inloggen op uw account</a>
                     </p>
-                    <p style='font-size:12px; color:#999; margin-top:30px;'>&copy; {DateTime.UtcNow.Year} Dot Net Tutorials. All rights reserved.</p>
+                    <p style='font-size:12px; color:#999; margin-top:30px;'>&copy; {DateTime.UtcNow.Year} Audiform.</p>
                   </div>
                 </body></html>
                 ";
 
-            await SendEmailAsync(ToEmail, "Account is created", htmlcontent, true);
+            await SendEmailAsync(ToEmail, "Account succesvol aangemaakt", htmlcontent, true);
 
         }
 
@@ -44,16 +48,17 @@ namespace Application.Services
             string htmlContent = $@"
             <html><body style='font-family: Arial, sans-serif; background-color: #f4f6f8; margin:0; padding:20px;'>
                   <div style='max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:8px;'>
-                    <h2 style='color:#333;'>Welcome, {"firstName"}!</h2>
-                    <p style='font-size:16px; color:#555;'>Thank you for registering. Please confirm your email by clicking the button below.</p>
+                    <h2 style='color:#333;'>Welkom!</h2>
+                    <p style='font-size:16px; color:#555;'>Bedankt voor uw registratie.
+                    Bevestig uw e-mailadres door op onderstaande knop te klikken.</p>
                     <p style='text-align:center;'>
-                      <a href='{confirmationlink}' style='background:#0d6efd; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;'>Confirm Your Email</a>
+                      <a href='{confirmationlink}' style='background:#0d6efd; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;'>Bevestig uw e-mailadres</a>
                     </p>
-                    <p style='font-size:12px; color:#999; margin-top:30px;'>&copy; {DateTime.UtcNow.Year} Dot Net Tutorials. All rights reserved.</p>
+                    <p style='font-size:12px; color:#999; margin-top:30px;'>&copy; {DateTime.UtcNow.Year} Audiform.</p>
                   </div>
                 </body></html>";
 
-            await SendEmailAsync(ToEmail, "EmailConfirmation", htmlContent, true);
+            await SendEmailAsync(ToEmail, "Bevestig uw e-mailadres", htmlContent, true);
         }
         
         private async Task SendEmailAsync(string toEmail, string subject, string body, bool isBodyHtml = false)
@@ -95,17 +100,16 @@ namespace Application.Services
         {
             string htmlcontent = $@"<html><body style='font-family: Arial, sans-serif; background-color: #f4f6f8; margin:0; padding:20px;'>
                   <div style='max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:8px;'>
-                    <h2 style='color:#333;'>Hello, {"firstName"}!</h2>
-                    <p style='font-size:16px; color:#555;'>You requested a new email confirmation link. Please confirm your email by clicking the button below.</p>
+                    <h2 style='color:#333;'>Hallo!</h2>
+                    <p style='font-size:16px; color:#555;'>U heeft een nieuwe e-mailbevestigingslink aangevraagd. Bevestig uw e-mailadres door op de onderstaande knop te klikken.</p>
                     <p style='text-align:center;'>
-                      <a href='{confirmationLink}' style='background:#0d6efd; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;'>Confirm Your Email</a>
+                      <a href='{confirmationLink}' style='background:#0d6efd; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;'>Bevestig uw e-mailadres</a>
                     </p>
-                    <p style='font-size:12px; color:#999; margin-top:30px;'>&copy; {DateTime.UtcNow.Year} Dot Net Tutorials. All rights reserved.</p>
+                    <p style='font-size:12px; color:#999; margin-top:30px;'>&copy; {DateTime.UtcNow.Year} Audiform.</p>
                   </div>
                 </body></html>";
 
-            await SendEmailAsync(ToEmail, "Email confirmation", htmlcontent, true);
+            await SendEmailAsync(ToEmail, "Nieuwe bevestigingsmail", htmlcontent, true);
         }
     }
 }
-    
