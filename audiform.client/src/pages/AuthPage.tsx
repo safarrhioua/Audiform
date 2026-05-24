@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import styles from "../Css/Auth.module.css";
 
 export default function AuthPage() {
-    const [isLogin, setIsLogin] = useState(false);
+    const [isLogin, setIsLogin] = useState(true );
 
     const [loginEmail, setLoginEmail] = useState("");
     const [loginPassword, setLoginPassword] = useState("");
@@ -113,32 +113,7 @@ export default function AuthPage() {
     return (
         <div className={styles.authPage}>
             <div className={styles.authCard}>
-                <div className={styles.formBox}>
-                    <h1>Account aanmaken</h1>
-                    <p>Vul uw gegevens in om te registreren</p>
-                    {registerMessage && (
-                        <p className={isSuccess ? styles.messageSuccess : styles.messageError}>
-                            {registerMessage}
-                        </p>
-                    )}
-                    <form onSubmit={handleRegister}>
-                        <label>Volledige naam</label>
-                        <input value={fullname} onChange={(e) => setFullname(e.target.value)} required />
-
-                        <label>E-mailadres</label>
-                        <input type="email" value={registerEmail} onChange={(e) => setRegisterEmail(e.target.value)} required />
-
-                        <label>Wachtwoord</label>
-                        <input type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} required />
-
-                        <label>Bevestig wachtwoord</label>
-                        <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-
-                        <button className={styles.darkBtn}>Registreren</button>
-                    </form>
-                    
-                </div>
-               
+                             
                 <div className={styles.formBox}>
                     {loginMessage && (
                         <p className={isSuccess ? styles.messageSuccess : styles.messageError}>
@@ -167,7 +142,31 @@ export default function AuthPage() {
 
                     
                 </div>
+                <div className={styles.formBox}>
+                    <h1>Account aanmaken</h1>
+                    <p>Vul uw gegevens in om te registreren</p>
+                    {registerMessage && (
+                        <p className={isSuccess ? styles.messageSuccess : styles.messageError}>
+                            {registerMessage}
+                        </p>
+                    )}
+                    <form onSubmit={handleRegister}>
+                        <label>Volledige naam</label>
+                        <input value={fullname} onChange={(e) => setFullname(e.target.value)} required />
 
+                        <label>E-mailadres</label>
+                        <input type="email" value={registerEmail} onChange={(e) => setRegisterEmail(e.target.value)} required />
+
+                        <label>Wachtwoord</label>
+                        <input type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} required />
+
+                        <label>Bevestig wachtwoord</label>
+                        <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+
+                        <button className={styles.darkBtn}>Registreren</button>
+                    </form>
+
+                </div>
                 <div className={`${styles.sliderPanel} ${isLogin ? styles.sliderRight : styles.sliderLeft}`}>
                     <b className={styles.welkom}>Welkom!</b>
 
@@ -177,16 +176,16 @@ export default function AuthPage() {
 
                     {isLogin ? (
                         <>
-                            <p>Heeft u al geen account?</p>
+                            <p>Heeft u nog geen account?</p>
                             <button className={styles.outlineBtn} onClick={() => setIsLogin(false)}>
-                                Inloggen
+                                Registreren
                             </button>
                         </>
                     ) : (
                         <>
-                            <p>Heeft u nog geen account?</p>
+                            <p>Heeft u al een account?</p>
                             <button className={styles.whiteBtn} onClick={() => setIsLogin(true)}>
-                                Maak een account
+                                Inloggen
                             </button>
                         </>
                     )}

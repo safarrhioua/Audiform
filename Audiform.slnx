@@ -15,4 +15,5 @@
   <Folder Name="/4. Infrastructure/">
     <Project Path="Infrastructure/Infrastructure.csproj" />
   </Folder>
+  <Project Path="UserTests/UserTests.csproj" />
 </Solution>
