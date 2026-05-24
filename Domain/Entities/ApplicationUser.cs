@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNet.Identity.EntityFramework;
-using Microsoft.AspNetCore.Identity;
+﻿    using Microsoft.AspNetCore.Identity;
 
-namespace Application
-{
-    public class ApplicationUser : IdentityUser
-    {        
-       
+    namespace Domain.Entities
+    {
+        public class ApplicationUser : IdentityUser
+        {
+            public string Fullname { get; set; } = string.Empty;
+
+        }
     }
-}
