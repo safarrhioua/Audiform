@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.WebUtilities;
 using Domain.Entities;
+using Application.Result;
 
 namespace Application.Services
 {

@@ -1,5 +1,4 @@
 ﻿using Domain.Entities;
-
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -18,6 +17,8 @@ namespace Infrastructure.Data
         {
 
         }
+
+        public DbSet<Adres> Adressen => Set<Adres>();
 
     }
 }

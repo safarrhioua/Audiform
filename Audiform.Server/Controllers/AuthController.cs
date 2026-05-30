@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Net.WebSockets;
 using RegisterRequest = Audiform.Server.Requests.Registerrequest;
@@ -95,9 +96,11 @@ namespace Audiform.Presentation.Server.Controllers
             var result = await _authService.LoginUserAsync(loginrequest.Email, loginrequest.Password);
             if (!result.Success)
                 return BadRequest(result.Message);
-            return Ok(result.Message);
-        }
 
+            return Ok(result.Message);  
+
+        }
+        
 
     } 
 }

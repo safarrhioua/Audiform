@@ -1,4 +1,4 @@
-﻿namespace Application
+﻿namespace Application.Result
 {
     public class AuthResult
     {

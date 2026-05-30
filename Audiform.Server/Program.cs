@@ -34,6 +34,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 // Auth services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IConfirmationService, EmailService>();
+builder.Services.AddScoped<IUserManagement, UserManagement>();
 
 // Cookie authentication voor API
 builder.Services.ConfigureApplicationCookie(options =>
