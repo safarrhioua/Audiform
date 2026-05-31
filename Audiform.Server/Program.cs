@@ -12,6 +12,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Controllers gebruiken voor REST API endpoints
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowClient", policy =>
+    {
+        policy.WithOrigins("https://localhost:60942")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -90,6 +100,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowClient");
 
 app.UseRouting();
 app.UseCors("frontend");
