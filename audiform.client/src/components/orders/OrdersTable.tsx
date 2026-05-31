@@ -38,8 +38,10 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
               <TableCell>
                 <OrderStatusChip status={order.state.stateName} />
               </TableCell>
-              <TableCell>
-                <SecondaryButton>Afgeleverd</SecondaryButton>
+                  <TableCell>
+                      {order.state.stateName === 'verzonden' && (
+                          <SecondaryButton>Afgeleverd</SecondaryButton>
+                      )}                
               </TableCell>
             </TableRow>
           ))}

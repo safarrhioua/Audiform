@@ -1,21 +1,31 @@
 import { useState, useEffect } from 'react';
 import { Typography, Box, Alert, CircularProgress } from '@mui/material';
 import OrdersTable from '../components/orders/OrdersTable';
-import { mockOrders } from '../data/mockOrders';
+//import { mockOrders } from '../data/mockOrders';
 import type { Order } from '../types/order';
 
 export default function OrdersPage(){
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
+    useEffect(() => {
+        fetch('https://localhost:7050/api/orders')
+            .then(res => res.json())
+            .then(data => {
+                setOrders(data);
+                setLoading(false);
+            });
+    }, []);
+
+
+  /*useEffect(() => {
     // Simuleer een API-aanroep met een korte vertraging
     const timer = setTimeout(() => {
       setOrders(mockOrders);
       setLoading(false);
     }, 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, []);*/
 
   return (
     <Box>

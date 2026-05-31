@@ -1,5 +1,6 @@
 using Application.EarpieceTemplates;
 using Application.Interfaces;
+using Application.Orders;
 using Infrastructure.Persistence;
 using Infrastructure.Security;
 using Microsoft.Extensions.Configuration;
@@ -23,6 +24,8 @@ public static class DependencyInjection
         services.AddScoped<IShopEmployeeRepository, ShopEmployeeRepository>();
         services.AddScoped<IUserShopContext, UserShopContext>();
         services.AddScoped<IGetAvailableTemplatesService, EarpieceTemplateService>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IGetOrdersService, GetOrdersService>();
 
         return services;
     }
