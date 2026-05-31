@@ -1,4 +1,11 @@
+using Application;
+using Application.Interfaces;
+using Application.Services;
 using Infrastructure;
+using Infrastructure.Data;
+
+using Microsoft.EntityFrameworkCore;
+using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,40 +30,63 @@ builder.Services.AddSwaggerGen();
 // Nodig voor UserShopContext
 builder.Services.AddHttpContextAccessor();
 
-builder.Services
-    .AddAuthentication(IdentityConstants.ApplicationScheme)
-    .AddCookie(IdentityConstants.ApplicationScheme, options =>
+// Database + infrastructure
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("defaultconnection")));
+
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+// Auth services
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IConfirmationService, EmailService>();
+
+// Cookie authentication voor API
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = ".AspNetCore.Identity.Application";
+    options.LoginPath = "/dev-login";
+
+    options.Events.OnRedirectToLogin = context =>
     {
-        options.Cookie.Name = ".AspNetCore.Identity.Application";
-        options.LoginPath = "/dev-login";
-
-        options.Events.OnRedirectToLogin = context =>
+        if (context.Request.Path.StartsWithSegments("/api"))
         {
-            if (context.Request.Path.StartsWithSegments("/api"))
-            {
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                return Task.CompletedTask;
-            }
-
-            context.Response.Redirect(context.RedirectUri);
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return Task.CompletedTask;
-        };
+        }
 
-        options.Events.OnRedirectToAccessDenied = context =>
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
         {
-            if (context.Request.Path.StartsWithSegments("/api"))
-            {
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                return Task.CompletedTask;
-            }
-
-            context.Response.Redirect(context.RedirectUri);
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
             return Task.CompletedTask;
-        };
-    });
+        }
+
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+});
+
+// CORS voor frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("frontend", policy =>
+        policy.WithOrigins("https://localhost:52914", "https://localhost:52915", "https://localhost:60942")
+              .AllowCredentials()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 builder.Services.AddAuthorization();
-builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
@@ -71,6 +101,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowClient");
+
+app.UseRouting();
+app.UseCors("frontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
