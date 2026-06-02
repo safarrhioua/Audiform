@@ -28,23 +28,24 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order.id} hover>
-               <TableCell>{order.orderNumber}</TableCell>
-              <TableCell>{order.patientName}</TableCell>
-              <TableCell>{order.patientNumber}</TableCell>
-              <TableCell>{order.orderDate}</TableCell>
-              <TableCell>{order.askedDeliveryDate}</TableCell>
-              <TableCell>
-                <OrderStatusChip status={order.state.stateName} />
-              </TableCell>
-                  <TableCell>
-                      {order.state.stateName === 'verzonden' && (
-                          <SecondaryButton>Afgeleverd</SecondaryButton>
-                      )}                
-              </TableCell>
-            </TableRow>
-          ))}
+                  {orders.map((order) => (
+                      <TableRow key={order.id} hover>
+                          <TableCell>{order.orderNumber}</TableCell>
+                          <TableCell>{order.patientName}</TableCell>
+                          <TableCell>{order.patientNumber}</TableCell>
+                          <TableCell>{new Date(order.orderDate).toLocaleDateString('nl-NL')}</TableCell>
+                          <TableCell>{new Date(order.deliveryDate).toLocaleDateString('nl-NL')}</TableCell>
+                          <TableCell>
+                              <OrderStatusChip status={order.state.stateName} />
+                          </TableCell>
+                          <TableCell>
+                              {order.state.stateName === 'verzonden' && (
+                                  <SecondaryButton>Remake</SecondaryButton>
+                              )}
+                          </TableCell>
+                      </TableRow>
+                  )
+                  )}
         </TableBody>
       </Table>
     </TableContainer>
