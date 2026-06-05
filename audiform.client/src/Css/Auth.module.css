@@ -179,4 +179,16 @@
     max-width: 420px;
     box-sizing: border-box;
 }
+.selectInput {
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: #f0f0f3;
+    padding: 0 14px;
+    margin-bottom: 14px;
+    outline: none;
+    font-size: 14px;
+
+}
+
 

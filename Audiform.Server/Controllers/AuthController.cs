@@ -4,6 +4,7 @@ using Audiform.Server.Requests;
 using Domain.Entities;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -20,7 +21,7 @@ namespace Audiform.Presentation.Server.Controllers
         private readonly IAuthService _authService;
         //this is for logging purposes, you can inject it via constructor and use it to log any information or errors in your controller actions
         private readonly ILogger<AuthController> _logger;
-
+        private readonly UserManager<ApplicationUser> _userManager;
         public AuthController(IAuthService authService, ILogger<AuthController> logger)
         {
             _authService = authService;
@@ -39,7 +40,7 @@ namespace Audiform.Presentation.Server.Controllers
                 Email = request.Email,
                 UserName = request.Email
             };
-            var result = await _authService.RegisterUserAsync(newuser, request.Password);
+            var result = await _authService.RegisterUserAsync(newuser, request.Password,request.Userrole);
 
             if (!result.Success)
             {
@@ -95,9 +96,19 @@ namespace Audiform.Presentation.Server.Controllers
                         
             var result = await _authService.LoginUserAsync(loginrequest.Email, loginrequest.Password);
             if (!result.Success)
-                return BadRequest(result.Message);
+                return BadRequest(new
+                {
+                    message= result.Message
+                });
 
-            return Ok(result.Message);  
+            return Ok(
+                new
+                {
+                    message = result.Message,
+                    role=result.Role
+                }
+                
+                );  
 
         }
         
