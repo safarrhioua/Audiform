@@ -1,5 +1,6 @@
 ﻿using Application;
 using Application.Interfaces;
+using Application.IRepo;
 using Application.Services;
 using Castle.Core.Smtp;
 using Domain.Entities;
@@ -20,17 +21,20 @@ namespace UserTests
         private readonly Mock<SignInManager<ApplicationUser>> _mockSignInManager;
         private readonly Mock<IConfiguration> _mockConfig;
         private readonly Mock<IConfirmationService> _mockConfirmationService;
-        public UserAuth()
+        private readonly Mock<RoleManager<IdentityRole>> _mockRoleManager;
+        private readonly Mock<IUserProfileRepository> _mockProfileRepository;
+        public UserAuth(Mock<IUserStore<ApplicationUser>> userStoreMock, Mock<RoleManager<IdentityRole>> roleManagerMock, Mock<IUserProfileRepository> profileRepositoryMock)
         {
-            _userStoreMock = new Mock<IUserStore<ApplicationUser>>();
+            _userStoreMock = userStoreMock;
+            _mockRoleManager = roleManagerMock;
+            _mockProfileRepository = profileRepositoryMock;
             _Mockusermanager = new Mock<UserManager<ApplicationUser>>(
                 _userStoreMock.Object,
-                null, null, null, null, null, null, null, null);
+                null!, null!, null!, null!, null!, null!, null!, null!);
 
             _mockSignInManager = new Mock<SignInManager<ApplicationUser>>(
                 _Mockusermanager.Object,
-                 null, null, null, null);
-
+                 null!, null!, null!, null!);
             _mockConfig = new Mock<IConfiguration>();
             _mockConfirmationService = new Mock<IConfirmationService>();
 
@@ -42,22 +46,29 @@ namespace UserTests
             _mockConfig
             .Setup(x => x["AppSettings:BackendBaseUrl"])
               .Returns("https://localhost:7050");
+            _Mockusermanager.Setup(x => x.FindByEmailAsync("test@outlook.com"))
+          .ReturnsAsync((ApplicationUser?)(null));
+            _Mockusermanager.Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Test"))
+            .ReturnsAsync(IdentityResult.Success);
+
+            _Mockusermanager.Setup(x => x.GenerateEmailConfirmationTokenAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync("test_token");
+            _mockRoleManager.Setup(x => x.RoleExistsAsync("ShopEmployee"))
+            .ReturnsAsync(true);
+
+
+            _mockProfileRepository.Setup(x => x.AssignRoleAsync(It.IsAny<ApplicationUser>(), "ShopEmployee"))
+                .Returns(Task.CompletedTask);
 
             _mockConfirmationService
             .Setup(x => x.SendRegisterationConfirmationEmailAsync(
              It.IsAny<string>(),
              It.IsAny<string>()))
             .Returns(Task.CompletedTask);
-            var authservice = new AuthService(_Mockusermanager.Object, null!, _mockConfig.Object, _mockConfirmationService.Object);
 
+            var authservice = new AuthService(_Mockusermanager.Object, null!, _mockConfig.Object, _mockConfirmationService.Object, _mockRoleManager.Object, _mockProfileRepository.Object);
 
-            _Mockusermanager.Setup(x => x.FindByEmailAsync("test@outlook.com"))
-            .ReturnsAsync((ApplicationUser?)(null));
-            _Mockusermanager.Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Test"))
-            .ReturnsAsync(IdentityResult.Success);
-
-            _Mockusermanager.Setup(x => x.GenerateEmailConfirmationTokenAsync(It.IsAny<ApplicationUser>()))
-            .ReturnsAsync("test_token");
+                 
 
 
 
@@ -69,7 +80,7 @@ namespace UserTests
             };
 
             //Act
-            var result = await authservice.RegisterUserAsync(newuser, "Test");
+            var result = await authservice.RegisterUserAsync(newuser, "Test","ShopEmployee");
 
             //Assert    
             Assert.True(result.Success);
@@ -87,18 +98,27 @@ namespace UserTests
                 
             _Mockusermanager.Setup(x => x.FindByEmailAsync("Test123@outlook.com"))
                 .ReturnsAsync(existeduser);
-            _Mockusermanager.Setup(x => x.IsEmailConfirmedAsync(It.IsAny<ApplicationUser>()))
+            _Mockusermanager.Setup(x => x.IsEmailConfirmedAsync(existeduser))
                 .ReturnsAsync(true);
+            _Mockusermanager.Setup(x=>x.IsInRoleAsync(existeduser,"PendingEmployee"))
+                .ReturnsAsync(false);
+
 
             _mockSignInManager.Setup(x => x.PasswordSignInAsync(existeduser.UserName, "Test", false, false))
                 .ReturnsAsync(SignInResult.Success);
-            var authservice = new AuthService(_Mockusermanager.Object, _mockSignInManager.Object, _mockConfig.Object, _mockConfirmationService.Object);
+
+            _Mockusermanager.Setup(x=>x.GetRolesAsync(existeduser))
+                .ReturnsAsync(new List<string> { "ShopEmployee" });
+
+            var authservice = new AuthService(_Mockusermanager.Object, _mockSignInManager.Object, _mockConfig.Object, _mockConfirmationService.Object, _mockRoleManager.Object, _mockProfileRepository.Object);
 
             //Act
             var result = await authservice.LoginUserAsync("Test123@outlook.com", "Test");
 
             Assert.True(result.Success);
             Assert.Equal("Inloggen is gelukt!", result.Message);
+            Assert.Equal("ShopEmployee", result.Role);
+
         }
     }
 }

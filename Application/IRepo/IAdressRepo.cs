@@ -4,11 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Application.Interfaces
+namespace Application.IRepo
 {
-    public interface IAdressManagement
+    public interface IAdressRepo
     {
-        Task<UpdateResult> AddNewAdressAsync(string userId, Adres newadress);
+        Task<UpdateResult> AddNewAdresAsync(string UserId, Adres newadres);
         Task<UpdateResult> UpdateAdressAsync(string userId, Adres updatedAdress);
         Task<UpdateResult> GetAdress(string userId);
     }

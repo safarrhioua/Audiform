@@ -43,7 +43,7 @@ namespace Application.Services
             var result = await _usermanager.UpdateAsync(existedUser);
             if (result.Succeeded)
             { 
-                return AuthResult.SuccessResult(true, "Profiel is succesvol bijgewerkt!");
+                return AuthResult.SuccessResult(true, "Profiel is succesvol bijgewerkt!","");
             }
             
             var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
