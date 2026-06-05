@@ -7,6 +7,8 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Application.IRepo;
+using Infrastructure.Repos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 // Auth services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IConfirmationService, EmailService>();
+builder.Services.AddScoped<IUserManagement, UserManagement>();
+builder.Services.AddScoped<IUserProfileRepository, UserRepo>();
 
 // Cookie authentication voor API
 builder.Services.ConfigureApplicationCookie(options =>
@@ -89,6 +93,20 @@ builder.Services.AddCors(options =>
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    string[] roles = { "Employee", "ShopEmployee", "PendingEmployee"};
+
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+}
 
 app.UseDefaultFiles();
 app.MapStaticAssets();

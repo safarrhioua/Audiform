@@ -19,7 +19,8 @@ const DRAWER_WIDTH = 240;
 const navItems: NavItem[] = [
     { label: 'Dashboard',    icon: <DashboardIcon />,   path: '/' },
     { label: 'Bestellingen', icon: <ShoppingBagIcon />, path: '/orders' },
-    { label: 'Profiel',      icon: <PersonIcon />,      path: '/profile' },
+    { label: 'Account',      icon: <PersonIcon />,      path: '/account' },
+    
 ];
 
 export default function Sidebar() {

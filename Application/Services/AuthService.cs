@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.WebUtilities;
 using Domain.Entities;
+using Application.Result;
+using Application.IRepo;
 
 namespace Application.Services
 {
@@ -17,17 +19,22 @@ namespace Application.Services
         private readonly SignInManager<ApplicationUser> _signinmanager;
         private readonly IConfiguration _config;
         private readonly IConfirmationService _confirmationservice;
+        private readonly RoleManager<IdentityRole> _rolemanager;
+        private readonly IUserProfileRepository _profileRepository;
+       
 
-        public AuthService(UserManager<ApplicationUser> usermanager, SignInManager<ApplicationUser> signinmanager, IConfiguration config, IConfirmationService confirmationService)
+        public AuthService(UserManager<ApplicationUser> usermanager, SignInManager<ApplicationUser> signinmanager, IConfiguration config, IConfirmationService confirmationService, RoleManager<IdentityRole> rolemanager, IUserProfileRepository profileRepository)
         {
             _usermanager = usermanager;
             _signinmanager = signinmanager;
             _config = config;
             _confirmationservice = confirmationService;
+            _rolemanager = rolemanager;
+            _profileRepository = profileRepository;
         }
 
 
-        public async Task<AuthResult> RegisterUserAsync(ApplicationUser user, string password)
+        public async Task<AuthResult> RegisterUserAsync(ApplicationUser user, string password,string userrole)
         {
 
             var existeduser= await _usermanager.FindByEmailAsync(user.Email!);
@@ -60,14 +67,43 @@ namespace Application.Services
                return AuthResult.FailedResult(false, string.Join(" ", errors));
             }
 
-            //this will assign the user to the "User" role, you can change it as per your "requirement"
-            //IdentityResult roleassignResult = await _usermanager.AddToRoleAsync(user, "User");
+            string assignedrole = userrole;
+            if(userrole == "Employee")
+            {
+                assignedrole= "PendingEmployee";
+            }
+           
+            
+           if(!await _rolemanager.RoleExistsAsync(assignedrole))
+            {
+                await _usermanager.DeleteAsync(user);
+                return AuthResult.FailedResult(false, $"De rol '{assignedrole}' bestaat niet. Probeer het opnieuw met een geldige rol.");
+            }
 
-            //if (!roleassignResult.Succeeded)
-            //{
-            //    await _usermanager.DeleteAsync(user);
-            //    return AuthResult.FailedResult(false, "User registration failed! Please try again.");
-            //}
+           var roleAssignResult = await _usermanager.AddToRoleAsync(user, assignedrole);
+
+            
+
+            if (!roleAssignResult.Succeeded)
+            {
+                var errors = roleAssignResult.Errors.Select(e => e.Description);
+                await _usermanager.DeleteAsync(user);
+                return AuthResult.FailedResult(false, string.Join(" ", errors));
+            }
+            if (userrole == "ShopEmployee")
+            {
+                await _profileRepository.AssignRoleAsync(user, userrole);
+            }
+
+            if (userrole == "Employee")
+            {
+                await _confirmationservice.SendAdminEmailConfirmationAsync(
+                    user.Email!,
+                    user.Fullname,
+                    userrole
+                );
+            }
+           
 
             // Generate email confirmation token and send confirmation email
             var token = await _usermanager.GenerateEmailConfirmationTokenAsync(user);
@@ -79,7 +115,7 @@ namespace Application.Services
 
             await _confirmationservice.SendRegisterationConfirmationEmailAsync(user.Email!, confirmationLink);
 
-            return AuthResult.SuccessResult(true, "Jij bent geregistreerd! ");
+            return AuthResult.SuccessResult(true, "Jij bent geregistreerd! ", userrole);
         }
 
         public async Task<AuthResult> ConfirmEmailAsync(string userId, string token)
@@ -109,7 +145,7 @@ namespace Application.Services
                 var BaseUrl = _config["AppSettings:BaseUrl"] ?? throw new InvalidOperationException("BaseUrl is not configured.");
                 var loginLink = $"{BaseUrl}/login?confirmed=true";
                 await _confirmationservice.SendAccountCreatedEmailAsync(user.Email!, loginLink);
-                return AuthResult.SuccessResult(true, "E-mail succesvol bevestigd.");
+                return AuthResult.SuccessResult(true, "E-mail succesvol bevestigd.","");
             }
             
             return AuthResult.FailedResult(false, "Bevestiging van e-mail mislukt.");
@@ -135,7 +171,7 @@ namespace Application.Services
             var baseUrl = _config["AppSettings:BackendBaseUrl"] ?? "https://localhost:7050";
             var confirmationLink = $"{baseUrl}/api/Auth/ConfirmEmail?userId={user.Id}&token={encodedToken}";
             await _confirmationservice.SendRegisterationConfirmationEmailAsync(user.Email!, confirmationLink);
-            return AuthResult.SuccessResult(true, "Bevestigingsmail opnieuw verzonden. Controleer uw e-mail.");
+            return AuthResult.SuccessResult(true, "Bevestigingsmail opnieuw verzonden. Controleer uw e-mail."," ");
         }
 
         public async Task<AuthResult> LoginUserAsync(string email, string password)
@@ -153,9 +189,18 @@ namespace Application.Services
             if (!await _usermanager.IsEmailConfirmedAsync(loggedinUser))
                 return AuthResult.FailedResult(false, "Uw e-mailadres is nog niet bevestigd. Controleer uw e-mail voor de bevestigingslink.");
 
+            if(await _usermanager.IsInRoleAsync(loggedinUser, "PendingEmployee"))
+            {
+                return AuthResult.FailedResult(false, "Uw account is nog in behandeling. U ontvangt een e-mail zodra uw account is goedgekeurd.");
+            }
+                
             var result = await _signinmanager.PasswordSignInAsync(loggedinUser.UserName, password, isPersistent: false, lockoutOnFailure: false);
             if (result.Succeeded)
-                return AuthResult.SuccessResult(true, "Inloggen is gelukt!");
+            {
+                var roles = await _usermanager.GetRolesAsync(loggedinUser);
+                var role = roles.FirstOrDefault() ?? string.Empty;
+                return AuthResult.SuccessResult(true, "Inloggen is gelukt!",role);
+            }   
 
             return AuthResult.FailedResult(false, "Inloggen mislukt! Controleer uw gegevens.");
         }
