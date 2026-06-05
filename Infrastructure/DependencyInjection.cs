@@ -29,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<IGetAvailableTemplatesService, EarpieceTemplateService>();
         services.AddScoped<ICreateEarpieceOrderService, CreateEarpieceOrderService>();
 
+        services.AddScoped<IGetOrdersService, GetOrdersService>();
+
         return services;
     }
 }

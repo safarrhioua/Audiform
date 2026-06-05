@@ -1,0 +1,124 @@
+.accountPage {
+    min-height: 100vh;
+    background: #f7f8fa;
+    padding: 48px 56px;
+    font-family: Arial, sans-serif;
+}
+
+.backButton {
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 28px;
+}
+
+.accountPage h1 {
+    color: #005daa;
+    font-size: 36px;
+    margin: 0 0 6px;
+}
+
+.subtitle {
+    color: #6f7280;
+    margin-bottom: 30px;
+}
+
+.tabs {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 30px;
+}
+
+.activeTab,
+.tab {
+    min-width: 180px;
+    height: 42px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.activeTab {
+    background: #005daa;
+    color: white;
+    border: none;
+}
+
+.tab {
+    background: white;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+}
+
+.accountCard {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 28px;
+    max-width: 920px;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px 32px;
+}
+
+.formGroup label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.formGroup input {
+    width: 100%;
+    height: 42px;
+    border: none;
+    border-radius: 8px;
+    background: #f0f1f4;
+    padding: 0 14px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+    .formGroup input:focus {
+        background: white;
+        border: 1px solid #005daa;
+    }
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 14px;
+    margin-top: 72px;
+}
+
+.cancelButton,
+.saveButton {
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cancelButton {
+    background: white;
+    border: 1px solid #e5e7eb;
+}
+
+.saveButton {
+    background: #005daa;
+    color: white;
+    border: none;
+}
+
+.message {
+    margin-top: 22px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #e8f7ec;
+    color: #2e7d32;
+    font-weight: 600;
+}

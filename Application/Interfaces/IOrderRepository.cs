@@ -1,4 +1,5 @@
 using Application.Orders;
+using Domain.Entities;
 
 namespace Application.Interfaces;
 
@@ -23,5 +24,8 @@ public interface IOrderRepository
     Task AddOrderFilesAsync(
         int orderId,
         IReadOnlyCollection<CreateOrderFileData> files,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Order>> GetAllOrdersAsync(
         CancellationToken cancellationToken = default);
 }
