@@ -26,8 +26,12 @@ export default function TemplateCard({ template }: TemplateCardProps) {
     const navigate = useNavigate();
 
     function handleConfigure() {
-        navigate(`/configuratie/${template.id}`, {
-            state: { template },
+        navigate('/configuratie', {
+            state: {
+                template,
+                rightTemplateId: template.id,
+                leftTemplateId: undefined,
+            },
         });
     }
 

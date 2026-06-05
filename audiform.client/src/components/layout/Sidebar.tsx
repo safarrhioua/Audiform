@@ -17,7 +17,7 @@ interface NavItem {
 const DRAWER_WIDTH = 240;
 
 const navItems: NavItem[] = [
-    { label: 'Dashboard',    icon: <DashboardIcon />, path: '/dashboard' },
+    { label: 'Dashboard',    icon: <DashboardIcon />, path: '/bestelpagina' },
     { label: 'Bestellingen', icon: <ShoppingBagIcon />, path: '/orders' },
     { label: 'Account',      icon: <PersonIcon />,      path: '/account' },
     
@@ -41,7 +41,7 @@ export default function Sidebar() {
         >
             <Toolbar sx={{ flexDirection: 'column', alignItems: 'center', py: 2 }}>
                 <img src="/logo.svg" alt="logo" style={{ width: 200, marginBottom: 35 }} />
-                <PrimaryButton onClick={() => navigate('/bestelpagina')}>
+                <PrimaryButton onClick={() => navigate('/configuratie')}>
                     Maak bestelling
                 </PrimaryButton>
                 <Typography variant="h5" noWrap sx={{ fontWeight: 'bold' }}>Mijn Overzicht</Typography>

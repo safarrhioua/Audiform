@@ -293,7 +293,7 @@ export default function BestellingAfronden() {
                             {template?.name ?? 'Product'}
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {template?.description ?? 'Geen productinformatie beschikbaar.'}
+                            {template?.description ?? 'Kiezen een oorstukje'}
                         </Typography>
                     </Paper>
 

@@ -107,10 +107,10 @@ export default function EarConfigurationCard({
                 </Typography>
 
                 <FormControl fullWidth size="small">
-                    <InputLabel id={`${title}-template-label`}>Template</InputLabel>
+                    <InputLabel id={`${title}-template-label`}>Kies een oorstukje</InputLabel>
                     <Select
                         labelId={`${title}-template-label`}
-                        label="Template"
+                        label="Kies een oorstukje"
                         value={String(selectedTemplateId ?? '')}
                         onChange={handleTemplateChange}
                         sx={{
@@ -122,7 +122,7 @@ export default function EarConfigurationCard({
                         }}
                     >
                         <MenuItem value="">
-                            <em>Geen template</em>
+                            <em>Geen oorstukje</em>
                         </MenuItem>
                         {templates.map((template) => (
                             <MenuItem key={template.id} value={String(template.id)}>
@@ -138,6 +138,8 @@ export default function EarConfigurationCard({
                     </Box>
                 ) : error ? (
                     <Alert severity="error">{error}</Alert>
+                ) : !selectedTemplateId ? (
+                    <Alert severity="info">Kies eerst een oorstukje om de opties te tonen.</Alert>
                 ) : steps.length === 0 ? (
                     <Alert severity="info">Geen configuratiestappen beschikbaar.</Alert>
                 ) : (

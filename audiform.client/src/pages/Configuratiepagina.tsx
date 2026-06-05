@@ -467,19 +467,6 @@ export default function Configuratiepagina() {
     const hasMissingRequiredSteps =
         missingRightRequiredStepIds.length > 0 || missingLeftRequiredStepIds.length > 0;
 
-    if (!initialTemplateId) {
-        return (
-            <Box>
-                <Alert severity="info" sx={{ mb: 3 }}>
-                    Kies eerst een product op de bestelpagina.
-                </Alert>
-                <Button variant="contained" onClick={() => navigate('/')}>
-                    Terug naar producten
-                </Button>
-            </Box>
-        );
-    }
-
     if (templatesLoading && templates.length === 0) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
@@ -496,7 +483,7 @@ export default function Configuratiepagina() {
         <Box sx={{ maxWidth: 1120 }}>
             <Button
                 variant="text"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/bestelpagina')}
                 sx={{
                     mb: 3,
                     color: 'text.primary',
@@ -529,7 +516,7 @@ export default function Configuratiepagina() {
                 {displayedTemplate ? (
                     <ProductDetails template={displayedTemplate} />
                 ) : (
-                    <Alert severity="info">Geen productinformatie beschikbaar.</Alert>
+                        <Alert severity="info">Kies een oorstukje om de productinformatie te tonen.</Alert>
                 )}
             </Paper>
 

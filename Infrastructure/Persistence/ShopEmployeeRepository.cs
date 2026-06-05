@@ -12,7 +12,7 @@ public sealed class ShopEmployeeRepository(NpgsqlDataSource dataSource) : IShopE
         const string sql = """
                            SELECT "shop_id"
                            FROM "shop_employees"
-                           WHERE "AspNetUsers_Id" = @userId
+                           WHERE "aspnetusers_id" = @userId
                            LIMIT 1;
                            """;
 
@@ -31,7 +31,7 @@ public sealed class ShopEmployeeRepository(NpgsqlDataSource dataSource) : IShopE
         const string sql = """
                            SELECT "id"
                            FROM "shop_employees"
-                           WHERE "AspNetUsers_Id" = @userId
+                           WHERE "aspnetusers_id" = @userId
                            LIMIT 1;
                            """;
 

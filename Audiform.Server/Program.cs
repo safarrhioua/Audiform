@@ -1,4 +1,3 @@
-using Application;
 using Application.Interfaces;
 using Application.Services;
 using Infrastructure;
@@ -87,6 +86,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -124,7 +124,7 @@ app.UseCors("ReactDevClient");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireCors("ReactDevClient");
 
 app.MapFallbackToFile("/index.html");
 
