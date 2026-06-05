@@ -401,3 +401,7 @@ Thumbs.db
 
 # test file
 Audiform.Server/Controllers/DevLoginController.cs
+
+# Uploaded order files
+Storage/orders/*
+!Storage/orders/.gitkeep
