@@ -45,6 +45,20 @@ builder.Services
         };
     });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactDevClient", policy =>
+    {
+        policy.WithOrigins(
+                "https://localhost:60942",
+                "http://localhost:60942"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 builder.Services.AddAuthorization();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -60,6 +74,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("ReactDevClient");
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -15,4 +15,6 @@
   <Folder Name="/4. Infrastructure/">
     <Project Path="Infrastructure/Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/Storage/" />
+  <Folder Name="/Storage/orders/" />
 </Solution>

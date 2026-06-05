@@ -9,22 +9,37 @@ public sealed class ShopEmployeeRepository(NpgsqlDataSource dataSource) : IShopE
         string userId,
         CancellationToken cancellationToken = default)
     {
-        if (!int.TryParse(userId, out var numericUserId))
-        {
-            return null;
-        }
-
         const string sql = """
-            SELECT shop_id
-            FROM shop_employees
-            WHERE user_id = @userId
-            LIMIT 1;
-            """;
+                           SELECT "shop_id"
+                           FROM "shop_employees"
+                           WHERE "AspNetUsers_Id" = @userId
+                           LIMIT 1;
+                           """;
 
         await using var command = dataSource.CreateCommand(sql);
-        command.Parameters.AddWithValue("userId", numericUserId);
+        command.Parameters.AddWithValue("userId", userId);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
+
+        return result is null or DBNull ? null : (int)result;
+    }
+
+    public async Task<int?> GetShopEmployeeIdByUserIdAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+                           SELECT "id"
+                           FROM "shop_employees"
+                           WHERE "AspNetUsers_Id" = @userId
+                           LIMIT 1;
+                           """;
+
+        await using var command = dataSource.CreateCommand(sql);
+        command.Parameters.AddWithValue("userId", userId);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+
         return result is null or DBNull ? null : (int)result;
     }
 }

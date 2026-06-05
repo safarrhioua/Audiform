@@ -1,0 +1,27 @@
+using Application.Orders;
+
+namespace Application.Interfaces;
+
+public interface IOrderRepository
+{
+    Task<CreateOrderSelectionData> CreateValidatedSelectionDataAsync(
+        string earSide,
+        int stepId,
+        int? optionId,
+        string? valueText,
+        CancellationToken cancellationToken = default);
+
+    Task<int> CreateOrderAsync(
+        CreateOrderData order,
+        CancellationToken cancellationToken = default);
+
+    Task AddOrderSelectionsAsync(
+        int orderId,
+        IReadOnlyCollection<CreateOrderSelectionData> selections,
+        CancellationToken cancellationToken = default);
+
+    Task AddOrderFilesAsync(
+        int orderId,
+        IReadOnlyCollection<CreateOrderFileData> files,
+        CancellationToken cancellationToken = default);
+}
