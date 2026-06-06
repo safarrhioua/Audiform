@@ -33,8 +33,8 @@ namespace UserTests
                 null!, null!, null!, null!, null!, null!, null!, null!);
 
             _mockSignInManager = new Mock<SignInManager<ApplicationUser>>(
-                _Mockusermanager.Object,
-                 null!, null!, null!, null!);
+                _Mockusermanager.Object
+                 );
             _mockConfig = new Mock<IConfiguration>();
             _mockConfirmationService = new Mock<IConfirmationService>();
 

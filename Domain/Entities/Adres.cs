@@ -11,7 +11,8 @@ namespace Domain.Entities
         public string Postcode { get; set; } = string.Empty;
         public string Stad { get; set; } = string.Empty;
         public string Land { get; set; } = string.Empty;
-        public int UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string AdresType { get; set; } = string.Empty;
 
         public ApplicationUser ApplicationUser { get; set; } = null!;
     }

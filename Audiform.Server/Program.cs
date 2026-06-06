@@ -38,6 +38,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IConfirmationService, EmailService>();
 builder.Services.AddScoped<IUserManagement, UserManagement>();
 builder.Services.AddScoped<IUserProfileRepository, UserRepo>();
+builder.Services.AddScoped<IAdressManagement, AdressManagement>();
+builder.Services.AddScoped<IAdressRepo, AdressRepository>();
 
 // Cookie authentication voor API
 builder.Services.ConfigureApplicationCookie(options =>
