@@ -53,7 +53,7 @@ export default function AuthPage() {
         const role = data.role || data.Role;
         setTimeout(() => {
             if (role == "ShopEmployee") {
-                navigate("/dashboard");
+                navigate("/bestelpagina");
             } else if (role == "Employee") {
                 navigate("/medewerkerportaal");
             } else {

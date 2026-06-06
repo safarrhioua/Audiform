@@ -19,4 +19,6 @@
   <Project Path="UserTests/UserTests.csproj">
     <Build Solution="Debug|*" Project="false" />
   </Project>
+  <Folder Name="/Storage/" />
+  <Folder Name="/Storage/orders/" />
 </Solution>
