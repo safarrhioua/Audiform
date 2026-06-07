@@ -9,7 +9,9 @@ export default function OrdersPage(){
   const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        fetch('https://localhost:7050/api/orders')
+        fetch('https://localhost:7050/api/orders', {
+            credentials: 'include',
+        })
             .then(res => res.json())
             .then(data => {
                 setOrders(data);
