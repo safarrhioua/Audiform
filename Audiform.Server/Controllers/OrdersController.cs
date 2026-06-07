@@ -28,4 +28,26 @@ public sealed class OrdersController(
             return Unauthorized();
         }
     }
+
+    [HttpGet("search")]
+    public async Task<ActionResult<IReadOnlyList<OrderDto>>> SearchOrders(
+    [FromQuery] string q,
+    CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        if (string.IsNullOrWhiteSpace(q))
+            return Ok(await getOrdersService.GetOrdersAsync(userId, cancellationToken));
+
+        try
+        {
+            var orders = await getOrdersService.SearchOrdersAsync(userId, q, cancellationToken);
+            return Ok(orders);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
+    }
 }

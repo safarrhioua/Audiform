@@ -10,7 +10,7 @@ const statusConfig: Record<string, { color: ChipProps['color'] }> = {
   'in productie': { color: 'warning' },
   'gereed':       { color: 'info' },
   'verzonden':    { color: 'success' },
-  'afgeleverd':   { color: 'secondary' },
+  'afgeleverd':   { color: 'tertiary' },
   'geannuleerd':  { color: 'error' },
 };
 

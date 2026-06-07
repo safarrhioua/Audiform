@@ -21,4 +21,21 @@ public sealed class GetOrdersService(
                 new OrderStateDto(null, order.Status ?? string.Empty)))
             .ToList();
     }
+
+    public async Task<IReadOnlyList<OrderDto>> SearchOrdersAsync(
+    string userId, string query, CancellationToken cancellationToken = default)
+    {
+        var orders = await orderRepository.SearchOrdersByUserAsync(userId, query, cancellationToken);
+
+        return orders
+            .Select(order => new OrderDto(
+                order.Id,
+                order.OrderNumber,
+                order.PatientName,
+                order.PatientNumber,
+                order.OrderDate,
+                order.DeliveryDate,
+                new OrderStateDto(null, order.Status ?? string.Empty)))
+            .ToList();
+    }
 }

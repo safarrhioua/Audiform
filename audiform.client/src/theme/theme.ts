@@ -9,6 +9,12 @@ declare module '@mui/material/styles' {
     }
 }
 
+declare module '@mui/material/Chip' {
+    interface ChipPropsColorOverrides {
+        tertiary: true;
+    }
+}
+
 const theme = createTheme({
     palette: {
         primary: {
