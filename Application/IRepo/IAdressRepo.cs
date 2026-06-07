@@ -8,8 +8,8 @@ namespace Application.IRepo
 {
     public interface IAdressRepo
     {
-        Task<UpdateResult> AddNewAdresAsync(string UserId, Adres newadres);
-        Task<UpdateResult> UpdateAdressAsync(string userId, Adres updatedAdress);
-        Task<UpdateResult> GetAdress(string userId);
+        Task AddNewAdresAsync(string UserId, Adres newadres);
+        Task UpdateAdressAsync(string userId, Adres updatedAdress,string adrestype);
+        Task <Adres?> GetAdress(string userId,string adrestype);
     }
 }

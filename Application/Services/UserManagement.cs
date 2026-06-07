@@ -21,25 +21,48 @@ namespace Application.Services
 
         public async Task<ApplicationUser> GetUserByIdAsync(string userId)
         {
-            return await _usermanager.FindByIdAsync(userId);
+            var existeduser = await _usermanager.FindByIdAsync(userId);
+            return existeduser;
         }
 
         public async Task<AuthResult> UpdateProfileUserAsync(ApplicationUser UpdatedUser)
         {
+            if (UpdatedUser == null)
+            {
+                return AuthResult.FailedResult(false, "Geen profielgegevens ontvangen.");
+            }
             var existedUser= await _usermanager.FindByIdAsync(UpdatedUser.Id);
             if (existedUser == null)
             {
                 return AuthResult.FailedResult(false, "Gebruiker is niet gevonden!");
             }
 
-            existedUser.Fullname = UpdatedUser.Fullname;
-            existedUser.Email = UpdatedUser.Email;
-            existedUser.NormalizedEmail = UpdatedUser.Email.ToUpper();
-            existedUser.UserName = UpdatedUser.Email;
-            existedUser.NormalizedUserName = UpdatedUser.Email.ToUpper();
-            existedUser.PhoneNumber = UpdatedUser.PhoneNumber;
-            existedUser.Dateofbirth = UpdatedUser.Dateofbirth;
+            if (!string.IsNullOrWhiteSpace(UpdatedUser.Email))
+            {
+                existedUser.Email = UpdatedUser.Email;
+                existedUser.NormalizedEmail = UpdatedUser.Email.ToUpper();
+            }
+            if (!string.IsNullOrWhiteSpace(UpdatedUser.Fullname))
+            {
+                existedUser.Fullname = UpdatedUser.Fullname;
+            }
+            
+            if (!string.IsNullOrWhiteSpace(UpdatedUser.UserName))
+            {
+                existedUser.UserName = UpdatedUser.Email;
+                existedUser.NormalizedUserName = UpdatedUser.Email.ToUpper();
+            }
+            if (UpdatedUser.PhoneNumber != null)
+            {
+                existedUser.PhoneNumber = UpdatedUser.PhoneNumber;
 
+            }
+            if (!string.IsNullOrWhiteSpace(UpdatedUser.Dateofbirth.ToString()))
+            {
+                existedUser.Dateofbirth = UpdatedUser.Dateofbirth;
+
+            }
+            
             var result = await _usermanager.UpdateAsync(existedUser);
             if (result.Succeeded)
             { 
