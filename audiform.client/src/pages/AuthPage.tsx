@@ -13,6 +13,8 @@ export default function AuthPage() {
     const [registerEmail, setRegisterEmail] = useState("");
     const [registerPassword, setRegisterPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [userrole, setUserrole] = useState("");
+
     const [searchParams] = useSearchParams();
     const confirmed = searchParams.get("confirmed") === "true";
     const [loginMessage, setLoginMessage] = useState(
@@ -38,19 +40,26 @@ export default function AuthPage() {
             }),
         });
 
-        const text = await response.text();
+        const data = await response.json();
 
         if (!response.ok) {
             setIsSuccess(false);
-            setLoginMessage(text || "Login mislukt");
+            setLoginMessage(data.message || "Login mislukt");
             return;
         }
 
         setIsSuccess(true);
-        setLoginMessage(text || "Login gelukt!");
-
+        setLoginMessage(data.message || "Login gelukt!");
+        const role = data.role || data.Role;
         setTimeout(() => {
-            navigate("/dashboard");
+            if (role == "ShopEmployee") {
+                navigate("/bestelpagina");
+            } else if (role == "Employee") {
+                navigate("/medewerkerportaal");
+            } else {
+                navigate("/authpage");
+            }
+            
         }, 1500);
        
     }
@@ -96,6 +105,7 @@ export default function AuthPage() {
                 fullname: fullname,
                 email: registerEmail,
                 password: registerPassword,
+                userrole,
             }),
         });
 
@@ -156,7 +166,13 @@ export default function AuthPage() {
 
                         <label>E-mailadres</label>
                         <input type="email" value={registerEmail} onChange={(e) => setRegisterEmail(e.target.value)} required />
-
+                        <label>Rol</label>
+                        <select className={styles.selectInput} value={userrole} onChange={(e) => setUserrole(e.target.value)} required>
+                            <option value="">Selecteer een rol</option>
+                            <option value="ShopEmployee">Audicien</option>
+                            <option value="Employee">Medewerker</option>
+                        </select>
+                       
                         <label>Wachtwoord</label>
                         <input type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} required />
 

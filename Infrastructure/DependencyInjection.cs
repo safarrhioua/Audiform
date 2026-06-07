@@ -3,6 +3,7 @@ using Application.Interfaces;
 using Application.Orders;
 using Infrastructure.Persistence;
 using Infrastructure.Security;
+using Infrastructure.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
@@ -22,9 +23,12 @@ public static class DependencyInjection
         services.AddScoped<IEarpieceTemplateRepository, EarpieceTemplateRepository>();  
         services.AddScoped<IShopRestrictionRepository, ShopRestrictionRepository>();
         services.AddScoped<IShopEmployeeRepository, ShopEmployeeRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IOrderFileStorage, OrderFileStorage>();
         services.AddScoped<IUserShopContext, UserShopContext>();
         services.AddScoped<IGetAvailableTemplatesService, EarpieceTemplateService>();
-        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<ICreateEarpieceOrderService, CreateEarpieceOrderService>();
+
         services.AddScoped<IGetOrdersService, GetOrdersService>();
 
         return services;

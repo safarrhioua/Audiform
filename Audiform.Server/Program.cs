@@ -1,4 +1,3 @@
-using Application;
 using Application.Interfaces;
 using Application.Services;
 using Infrastructure;
@@ -7,21 +6,13 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Application.IRepo;
+using Infrastructure.Repos;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers gebruiken voor REST API endpoints
 builder.Services.AddControllers();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowClient", policy =>
-    {
-        policy.WithOrigins("https://localhost:60942")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -44,6 +35,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 // Auth services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IConfirmationService, EmailService>();
+builder.Services.AddScoped<IUserManagement, UserManagement>();
+builder.Services.AddScoped<IUserProfileRepository, UserRepo>();
+builder.Services.AddScoped<IAdressManagement, AdressManagement>();
+builder.Services.AddScoped<IAdressRepo, AdressRepository>();
 
 // Cookie authentication voor API
 builder.Services.ConfigureApplicationCookie(options =>
@@ -76,19 +71,42 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
-// CORS voor frontend
+// CORS voor React frontend
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("frontend", policy =>
-        policy.WithOrigins("https://localhost:52914", "https://localhost:52915", "https://localhost:60942")
-              .AllowCredentials()
-              .AllowAnyHeader()
-              .AllowAnyMethod());
+    options.AddPolicy("ReactDevClient", policy =>
+    {
+        policy.WithOrigins(
+                "https://localhost:60942",
+                "http://localhost:60942",
+                "https://localhost:52914",
+                "https://localhost:52915"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
+
 
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    string[] roles = { "Employee", "ShopEmployee", "PendingEmployee" };
+
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+}
 
 app.UseDefaultFiles();
 app.MapStaticAssets();
@@ -100,15 +118,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowClient");
 
 app.UseRouting();
-app.UseCors("frontend");
+
+app.UseCors("ReactDevClient");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireCors("ReactDevClient");
 
 app.MapFallbackToFile("/index.html");
 

@@ -11,7 +11,7 @@ public sealed class EarpieceTemplateRepository(NpgsqlDataSource dataSource) : IE
         CancellationToken cancellationToken = default)
     {
         const string sql = """
-            SELECT id, name, version
+            SELECT id, name, version, description, image_path
             FROM earpiece_templates
             ORDER BY id;
             """;
@@ -27,6 +27,8 @@ public sealed class EarpieceTemplateRepository(NpgsqlDataSource dataSource) : IE
                 Id = reader.GetInt32(0),
                 Name = reader.GetString(1),
                 Version = reader.GetInt32(2),
+                Description = reader.IsDBNull(3) ? null : reader.GetString(3),
+                ImagePath = reader.IsDBNull(4) ? null : reader.GetString(4),
             });
         }
 
