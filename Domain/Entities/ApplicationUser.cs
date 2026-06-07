@@ -5,8 +5,7 @@
         public class ApplicationUser : IdentityUser
         {
             public string Fullname { get; set; } = string.Empty;
-            public DateOnly? Dateofbirth {  get; set; }
-            
+            public DateOnly? Dateofbirth {  get; set; }            
             public ICollection<Adres> Adressen { get; set; } = new List<Adres>();
-    }
+        }
     }

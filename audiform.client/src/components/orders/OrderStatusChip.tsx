@@ -8,9 +8,9 @@ const statusConfig: Record<string, { color: ChipProps['color'] }> = {
   'nieuw':        { color: 'default' },
   'ontvangen':    { color: 'primary' },
   'in productie': { color: 'warning' },
-  'gereed':       { color: 'secondary' },
-  'verzonden':    { color: 'info' },
-  'afgeleverd':   { color: 'success' },
+  'gereed':       { color: 'info' },
+  'verzonden':    { color: 'success' },
+  'afgeleverd':   { color: 'tertiary' },
   'geannuleerd':  { color: 'error' },
 };
 
