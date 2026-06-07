@@ -6,19 +6,19 @@ public sealed class GetOrdersService(
     IOrderRepository orderRepository) : IGetOrdersService
 {
     public async Task<IReadOnlyList<OrderDto>> GetOrdersAsync(
-        CancellationToken cancellationToken = default)
+        string userId, CancellationToken cancellationToken = default)
     {
-        var orders = await orderRepository.GetAllOrdersAsync(cancellationToken);
+        var orders = await orderRepository.GetOrdersByUserAsync(userId, cancellationToken);
 
         return orders
-    .Select(order => new OrderDto(
-        order.Id,
-        order.OrderNumber,
-        order.PatientName,
-        order.PatientNumber,
-        order.OrderDate,
-        order.DeliveryDate,
-        new OrderStateDto(null, order.Status ?? string.Empty)))
-    .ToList();
+            .Select(order => new OrderDto(
+                order.Id,
+                order.OrderNumber,
+                order.PatientName,
+                order.PatientNumber,
+                order.OrderDate,
+                order.DeliveryDate,
+                new OrderStateDto(null, order.Status ?? string.Empty)))
+            .ToList();
     }
 }

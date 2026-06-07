@@ -6,4 +6,7 @@ public interface IOrderRepository
 {
     Task<IReadOnlyList<Order>> GetAllOrdersAsync(
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Order>> GetOrdersByUserAsync(
+        string userId, CancellationToken cancellationToken = default);
 }

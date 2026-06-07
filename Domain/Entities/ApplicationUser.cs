@@ -5,6 +5,7 @@
         public class ApplicationUser : IdentityUser
         {
             public string Fullname { get; set; } = string.Empty;
+            public int? ShopEmployeeId { get; set; }
 
-        }
+    }
     }
