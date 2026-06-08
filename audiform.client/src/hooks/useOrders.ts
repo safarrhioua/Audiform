@@ -5,27 +5,40 @@ export function useOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [query, setQuery] = useState<string>('');
+    const [page, setPage] = useState<number>(1);
+    const [totalCount, setTotalCount] = useState<number>(0);
 
-    const fetchOrders = useCallback((searchQuery: string) => {
+    const fetchOrders = useCallback((searchQuery: string, currentPage: number) => {
         setLoading(true);
         const url = searchQuery.trim()
             ? `https://localhost:7050/api/orders/search?q=${encodeURIComponent(searchQuery)}`
-            : 'https://localhost:7050/api/orders';
+            : `https://localhost:7050/api/orders?page=${currentPage}&pageSize=20`;
 
         fetch(url, { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
-                setOrders(data);
+                if (searchQuery.trim()) {
+                    setOrders(data);
+                    setTotalCount(data.length);
+                } else {
+                    setOrders(data.items);
+                    setTotalCount(data.totalCount);
+                }
                 setLoading(false);
             });
     }, []);
 
+    const handleSetQuery = useCallback((newQuery: string) => {
+        setQuery(newQuery);
+        setPage(1); // bij nieuw zoekwoord altijd terug naar pagina 1
+    }, []);
+
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchOrders(query);
+            fetchOrders(query, page);
         }, 400);
         return () => clearTimeout(timer);
-    }, [query, fetchOrders]);
+    }, [query, page, fetchOrders]);
 
-    return { orders, loading, query, setQuery };
+    return { orders, loading, query, setQuery: handleSetQuery, page, setPage, totalCount };
 }

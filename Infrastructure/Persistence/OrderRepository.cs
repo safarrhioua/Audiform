@@ -307,4 +307,52 @@ public sealed class OrderRepository(NpgsqlDataSource dataSource) : IOrderReposit
 
         return orders;
     }
+
+    public async Task<(IReadOnlyList<Order> Orders, int TotalCount)> GetOrdersByUserPagedAsync(
+    string userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        const string countSql = """
+        SELECT COUNT(*)
+        FROM orders o
+        JOIN shop_employees se ON se.id = o.shop_employee_id
+        WHERE se.aspnetusers_id = @userId;
+        """;
+
+        await using var countCommand = dataSource.CreateCommand(countSql);
+        countCommand.Parameters.AddWithValue("@userId", userId);
+        var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken));
+
+        const string sql = """
+        SELECT o.id, o.shop_order_id, o.patient_name, o.patient_number,
+               o.order_date, o.delivery_date, o.status
+        FROM orders o
+        JOIN shop_employees se ON se.id = o.shop_employee_id
+        WHERE se.aspnetusers_id = @userId
+        ORDER BY o.order_date DESC
+        LIMIT @pageSize OFFSET @offset;
+        """;
+
+        await using var command = dataSource.CreateCommand(sql);
+        command.Parameters.AddWithValue("@userId", userId);
+        command.Parameters.AddWithValue("@pageSize", pageSize);
+        command.Parameters.AddWithValue("@offset", (page - 1) * pageSize);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var orders = new List<Order>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            orders.Add(new Order
+            {
+                Id = reader.GetInt32(0),
+                OrderNumber = reader.IsDBNull(1) ? null : reader.GetString(1),
+                PatientName = reader.IsDBNull(2) ? null : reader.GetString(2),
+                PatientNumber = reader.IsDBNull(3) ? null : reader.GetString(3),
+                OrderDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4),
+                DeliveryDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+                Status = reader.IsDBNull(6) ? null : reader.GetString(6),
+            });
+        }
+
+        return (orders, totalCount);
+    }
 }

@@ -1,14 +1,14 @@
-import { Typography, Box, Alert, CircularProgress, TextField } from '@mui/material';
+import { Typography, Box, Alert, CircularProgress, TextField, Pagination } from '@mui/material';
 import OrdersTable from '../components/orders/OrdersTable';
 import { useOrders } from '../hooks/useOrders';
 
 export default function OrdersPage() {
-    const { orders, loading, query, setQuery } = useOrders();
+    const { orders, loading, query, setQuery, page, setPage, totalCount } = useOrders();
 
     return (
         <Box>
             <TextField
-                label="Zoeken op bestelnummer, patiëntnaam of patiëntnummer"
+                label="Zoeken op bestelnummer, klantnaam of klantnummer"
                 variant="outlined"
                 fullWidth
                 sx={{ mb: 3 }}
@@ -22,8 +22,6 @@ export default function OrdersPage() {
                 Hier zie je een overzicht van al je bestellingen en hun huidige status.
             </Typography>
 
-            
-
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                     <CircularProgress />
@@ -31,7 +29,19 @@ export default function OrdersPage() {
             ) : orders.length === 0 ? (
                 <Alert severity="info">Geen bestellingen gevonden.</Alert>
             ) : (
-                <OrdersTable orders={orders} />
+                <>
+                    <OrdersTable orders={orders} />
+                    {!query.trim() && totalCount > 20 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                            <Pagination
+                                count={Math.ceil(totalCount / 20)}
+                                page={page}
+                                onChange={(_, value) => setPage(value)}
+                                color="primary"
+                            />
+                        </Box>
+                    )}
+                </>
             )}
         </Box>
     );
