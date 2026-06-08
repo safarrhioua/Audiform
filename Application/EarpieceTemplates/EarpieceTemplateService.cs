@@ -21,7 +21,12 @@ public sealed class EarpieceTemplateService(
 
         return templates
             .Where(template => !blockedTemplateIds.Contains(template.Id))
-            .Select(template => new AvailableTemplateDto(template.Id, template.Name))
+            .Select(template => new AvailableTemplateDto(
+                template.Id,
+                template.Name,
+                template.Description,
+                template.ImagePath,
+                template.Version))
             .ToList();
     }
 

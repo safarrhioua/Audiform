@@ -1,50 +1,38 @@
-import { useState, useEffect } from 'react';
-import { Typography, Box, Alert, CircularProgress } from '@mui/material';
+import { Typography, Box, Alert, CircularProgress, TextField } from '@mui/material';
 import OrdersTable from '../components/orders/OrdersTable';
-//import { mockOrders } from '../data/mockOrders';
-import type { Order } from '../types/order';
+import { useOrders } from '../hooks/useOrders';
 
-export default function OrdersPage(){
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+export default function OrdersPage() {
+    const { orders, loading, query, setQuery } = useOrders();
 
-    useEffect(() => {
-        fetch('https://localhost:7050/api/orders')
-            .then(res => res.json())
-            .then(data => {
-                setOrders(data);
-                setLoading(false);
-            });
-    }, []);
+    return (
+        <Box>
+            <TextField
+                label="Zoeken op bestelnummer, patiëntnaam of patiëntnummer"
+                variant="outlined"
+                fullWidth
+                sx={{ mb: 3 }}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+            />
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+                Mijn Bestellingen
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>
+                Hier zie je een overzicht van al je bestellingen en hun huidige status.
+            </Typography>
 
+            
 
-  /*useEffect(() => {
-    // Simuleer een API-aanroep met een korte vertraging
-    const timer = setTimeout(() => {
-      setOrders(mockOrders);
-      setLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);*/
-
-  return (
-    <Box>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-        Mijn Actieve Bestellingen
-      </Typography>
-      <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>
-        Hier zie je een overzicht van al je lopende bestellingen en hun huidige status.
-      </Typography>
-
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
+            {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                    <CircularProgress />
+                </Box>
+            ) : orders.length === 0 ? (
+                <Alert severity="info">Geen bestellingen gevonden.</Alert>
+            ) : (
+                <OrdersTable orders={orders} />
+            )}
         </Box>
-      ) : orders.length === 0 ? (
-        <Alert severity="info">Je hebt momenteel geen actieve bestellingen.</Alert>
-      ) : (
-        <OrdersTable orders={orders} />
-      )}
-    </Box>
-  );
+    );
 }

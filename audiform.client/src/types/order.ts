@@ -9,14 +9,15 @@ export type OrderStatus =
 
 export interface OrderState {
   id: number;
-  //stateName: string;
+  stateName: string;
 }
 
 export interface Order {
   id: number;
-  patient_name: string;
-  patient_number: string;
-  order_date: string;
-  delivery_date: string;
-  status: string;
+  orderNumber: string
+  patientName: string | null;
+  patientNumber: string
+  orderDate: string;
+  deliveryDate: string;
+  state: OrderState;
 }

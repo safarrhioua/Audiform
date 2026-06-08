@@ -16,5 +16,9 @@
   <Folder Name="/4. Infrastructure/">
     <Project Path="Infrastructure/Infrastructure.csproj" />
   </Folder>
-  <Project Path="UserTests/UserTests.csproj" />
+  <Project Path="UserTests/UserTests.csproj">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
+  <Folder Name="/Storage/" />
+  <Folder Name="/Storage/orders/" />
 </Solution>

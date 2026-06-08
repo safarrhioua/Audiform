@@ -111,5 +111,27 @@ namespace Application.Services
 
             await SendEmailAsync(ToEmail, "Nieuwe bevestigingsmail", htmlcontent, true);
         }
+
+        public async Task SendAdminEmailConfirmationAsync(string ToEmail, string fullname, string requestedRole)
+        {
+            var adminemail = _config["EmailSettings:SenderEmail"];
+
+            string htmlcontent = $@"<html><body style='font-family: Arial, sans-serif; background-color: #f4f6f8; margin:0; padding:20px;'>
+                  <div style='max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:8px;'>
+                    <h2 style='color:#333;'>Nieuwe gebruikersregistratie</h2>
+                    <p style='font-size:16px; color:#555;'>Er is een nieuwe gebruiker geregistreerd met de volgende gegevens:</p>
+                    <ul style='font-size:16px; color:#555;'>
+                      <li><strong>Naam:</strong> {fullname}</li>
+                      <li><strong>Gevraagde rol:</strong> {requestedRole}</li>
+                      <li><strong>E-mailadres:</strong> {ToEmail}</li>
+                    </ul>
+                    <p style='font-size:16px; color:#555;'>Gelieve deze registratie te beoordelen en de nodige acties te ondernemen.</p>
+                    <p style='font-size:12px; color:#999; margin-top:30px;'>&copy; {DateTime.UtcNow.Year} Audiform.</p>
+                  </div>
+                </body></html>";
+
+            await SendEmailAsync(adminemail!, "Nieuwe gebruikersregistratie", htmlcontent, true);
+
+        }
     }
 }
