@@ -125,9 +125,9 @@ public sealed class OrderRepository(NpgsqlDataSource dataSource) : IOrderReposit
 
         const string insertSql = """
             INSERT INTO "orders"
-                ("shop_employee_id", "patient_name", "patient_number", "remarks", "order_date", "delivery_date", "status")
+                ("shop_employee_id", "patient_name", "patient_number", "remarks", "send_method", "order_date", "delivery_date", "status")
             VALUES
-                (@shopEmployeeId, @patientName, @patientNumber, @remarks, @orderDate, @deliveryDate, @status)
+                (@shopEmployeeId, @patientName, @patientNumber, @remarks, @sendMethod, @orderDate, @deliveryDate, @status)
             RETURNING "id";
             """;
 
@@ -136,6 +136,7 @@ public sealed class OrderRepository(NpgsqlDataSource dataSource) : IOrderReposit
         insertCommand.Parameters.AddWithValue("patientName", order.PatientName);
         insertCommand.Parameters.AddWithValue("patientNumber", order.PatientNumber);
         insertCommand.Parameters.AddWithValue("remarks", (object?)order.Remarks ?? DBNull.Value);
+        insertCommand.Parameters.AddWithValue("sendMethod", order.SendMethod);
         insertCommand.Parameters.AddWithValue("orderDate", order.OrderDate);
         insertCommand.Parameters.AddWithValue("deliveryDate", order.DeliveryDate);
         insertCommand.Parameters.AddWithValue("status", order.Status);

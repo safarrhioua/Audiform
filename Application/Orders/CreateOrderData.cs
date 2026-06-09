@@ -5,6 +5,7 @@ public sealed record CreateOrderData(
     string PatientName,
     string PatientNumber,
     string? Remarks,
+    string SendMethod,
     DateTime OrderDate,
     DateTime DeliveryDate,
     string Status);

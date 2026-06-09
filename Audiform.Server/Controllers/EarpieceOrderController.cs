@@ -33,6 +33,7 @@ public sealed class EarpieceOrderController(
                     request.PatientNumber,
                     request.DeliveryDate,
                     request.Remarks,
+                    request.SendMethod,
                     request.SelectionsJson,
                     files),
                 cancellationToken);
@@ -67,6 +68,9 @@ public sealed class CreateEarpieceOrderFormRequest
 
     [FromForm(Name = "remarks")]
     public string? Remarks { get; init; }
+
+    [FromForm(Name = "send_method")]
+    public string? SendMethod { get; init; }
 
     [FromForm(Name = "selections_json")]
     public string? SelectionsJson { get; init; }
