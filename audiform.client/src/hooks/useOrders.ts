@@ -16,6 +16,7 @@ export function getEffectiveStatus(order: Order): string {
 
 export function useOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
+    const [totalCount, setTotalCount] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(true);
     const [query, setQuery] = useState<string>('');
 
@@ -27,8 +28,16 @@ export function useOrders() {
 
         fetch(url, { credentials: 'include' })
             .then(res => res.json())
-            .then((data: Order[]) => {
-                setOrders(data.filter(isOrderVisible));
+            .then(data => {
+                if (searchQuery.trim()) {
+                    const filtered = (data as Order[]).filter(isOrderVisible);
+                    setOrders(filtered);
+                    setTotalCount(filtered.length);
+                } else {
+                    const filtered = (data.items as Order[]).filter(isOrderVisible);
+                    setOrders(filtered);
+                    setTotalCount(data.totalCount);
+                }
                 setLoading(false);
             });
     }, []);
@@ -40,5 +49,5 @@ export function useOrders() {
         return () => clearTimeout(timer);
     }, [query, fetchOrders]);
 
-    return { orders, loading, query, setQuery };
+    return { orders, totalCount, loading, query, setQuery };
 }
