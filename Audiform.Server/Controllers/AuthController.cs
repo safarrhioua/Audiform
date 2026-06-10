@@ -21,7 +21,7 @@ namespace Audiform.Presentation.Server.Controllers
         private readonly IAuthService _authService;
         //this is for logging purposes, you can inject it via constructor and use it to log any information or errors in your controller actions
         private readonly ILogger<AuthController> _logger;
-        private readonly UserManager<ApplicationUser> _userManager;
+       
         public AuthController(IAuthService authService, ILogger<AuthController> logger)
         {
             _authService = authService;

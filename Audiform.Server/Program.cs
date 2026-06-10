@@ -37,6 +37,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IConfirmationService, EmailService>();
 builder.Services.AddScoped<IUserManagement, UserManagement>();
 builder.Services.AddScoped<IUserProfileRepository, UserRepo>();
+builder.Services.AddScoped<IAdressManagement, AdressManagement>();
+builder.Services.AddScoped<IAdressRepo, AdressRepository>();
 
 // Cookie authentication voor API
 builder.Services.ConfigureApplicationCookie(options =>
@@ -76,7 +78,6 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "https://localhost:60942",
-                "http://localhost:60942",
                 "https://localhost:52914",
                 "https://localhost:52915"
             )

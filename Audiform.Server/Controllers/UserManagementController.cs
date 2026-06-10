@@ -17,16 +17,22 @@ namespace Audiform.Server.Controllers
         {
             _usermanagement = usermanagement;
         }
+
         [HttpPut("updateprofile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfile updateprofile)
         
         {
+            if (updateprofile == null)
+            {
+                return BadRequest("Geen profielgegevens ontvangen.");
+            }
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized("Gebruiker is niet ingelogd.");
             }
+            
 
             var user =new ApplicationUser
             {
@@ -36,7 +42,7 @@ namespace Audiform.Server.Controllers
                 PhoneNumber = updateprofile.PhoneNumber,
                 Dateofbirth = updateprofile.Dateofbirth
             };
-
+           
             var result = await _usermanagement.UpdateProfileUserAsync(user);
             if(!result.Success)
             {

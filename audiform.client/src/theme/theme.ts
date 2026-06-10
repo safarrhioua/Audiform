@@ -9,6 +9,12 @@ declare module '@mui/material/styles' {
     }
 }
 
+declare module '@mui/material/Chip' {
+    interface ChipPropsColorOverrides {
+        tertiary: true;
+    }
+}
+
 const theme = createTheme({
     palette: {
         primary: {
@@ -43,6 +49,19 @@ const theme = createTheme({
             fontWeight: 400,
         },
     },
-});
+        components: {
+            MuiChip: {
+                variants: [
+                    {
+                        props: { color: 'tertiary' },
+                        style: {
+                            backgroundColor: '#fabe50',
+                            color: '#000',
+                        },
+                    },
+                ],
+            },
+        },
+    });
 
 export default theme;
