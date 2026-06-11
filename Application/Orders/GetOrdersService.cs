@@ -38,4 +38,24 @@ public sealed class GetOrdersService(
                 new OrderStateDto(null, order.Status ?? string.Empty)))
             .ToList();
     }
+
+    public async Task<PagedResult<OrderDto>> GetOrdersPagedAsync(
+    string userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var (orders, totalCount) = await orderRepository.GetOrdersByUserPagedAsync(
+            userId, page, pageSize, cancellationToken);
+
+        var items = orders
+            .Select(order => new OrderDto(
+                order.Id,
+                order.OrderNumber,
+                order.PatientName,
+                order.PatientNumber,
+                order.OrderDate,
+                order.DeliveryDate,
+                new OrderStateDto(null, order.Status ?? string.Empty)))
+            .ToList();
+
+        return new PagedResult<OrderDto>(items, totalCount);
+    }
 }

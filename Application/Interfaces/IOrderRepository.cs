@@ -33,4 +33,6 @@ public interface IOrderRepository
         string userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Order>> SearchOrdersByUserAsync(
         string userId, string query, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<Order> Orders, int TotalCount)> GetOrdersByUserPagedAsync(
+    string userId, int page, int pageSize, CancellationToken cancellationToken = default);
 }
