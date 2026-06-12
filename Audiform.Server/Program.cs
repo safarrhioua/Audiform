@@ -44,7 +44,9 @@ builder.Services.AddScoped<IAdressRepo, AdressRepository>();
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = ".AspNetCore.Identity.Application";
-    options.LoginPath = "/dev-login";
+    // /dev-login wordt niet meer gebruikt.
+    // API requests krijgen hieronder 401 terug in plaats van een redirect.
+    options.LoginPath = "/login";
 
     options.Events.OnRedirectToLogin = context =>
     {

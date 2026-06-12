@@ -19,6 +19,10 @@ import type { EarSelections } from '../types/EarSelections';
 import type { EarpieceTemplate } from '../types/EarpieceTemplate';
 import { formatSendMethod } from '../utils/orderFormatters';
 
+const MAX_FILES = 4;
+const MAX_FILE_SIZE_IN_BYTES = 10 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'application/pdf'];
+
 interface BestellingAfrondenLocationState {
     template?: EarpieceTemplate;
     rightTemplateId?: number;
@@ -43,6 +47,7 @@ export default function BestellingAfronden() {
     const [deliveryDate, setDeliveryDate] = useState('');
     const [remarks, setRemarks] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [fileUploadError, setFileUploadError] = useState('');
     const [sendMethod, setSendMethod] = useState('physical');
     const {
         createdOrder,
@@ -85,10 +90,52 @@ export default function BestellingAfronden() {
         const files = event.currentTarget.files
             ? Array.from(event.currentTarget.files)
             : [];
+        const errors: string[] = [];
 
-        setSelectedFiles(files);
+        if (files.length === 0) {
+            event.currentTarget.value = '';
+            return;
+        }
+
+        const filesWithAllowedTypes = files.filter((file) => {
+            if (ALLOWED_FILE_TYPES.includes(file.type)) {
+                return true;
+            }
+
+            errors.push(`${file.name} heeft geen toegestaan bestandstype.`);
+            return false;
+        });
+
+        const filesWithAllowedSizes = filesWithAllowedTypes.filter((file) => {
+            if (file.size <= MAX_FILE_SIZE_IN_BYTES) {
+                return true;
+            }
+
+            errors.push(`${file.name} is groter dan 10MB.`);
+            return false;
+        });
+
+        const availableSlots = MAX_FILES - selectedFiles.length;
+        const filesToAdd = filesWithAllowedSizes.slice(0, Math.max(availableSlots, 0));
+
+        if (filesWithAllowedSizes.length > availableSlots) {
+            errors.push(`U kunt maximaal ${MAX_FILES} bestanden toevoegen.`);
+        }
+
+        if (filesToAdd.length > 0) {
+            setSelectedFiles((currentFiles) => [...currentFiles, ...filesToAdd]);
+        }
+
+        setFileUploadError(errors.join(' '));
 
         event.currentTarget.value = '';
+    }
+
+    function handleRemoveSelectedFile(fileIndex: number) {
+        setSelectedFiles((currentFiles) =>
+            currentFiles.filter((_, index) => index !== fileIndex),
+        );
+        setFileUploadError('');
     }
 
     function handleSendMethodChange(newSendMethod: string) {
@@ -96,6 +143,7 @@ export default function BestellingAfronden() {
 
         if (newSendMethod === 'physical') {
             setSelectedFiles([]);
+            setFileUploadError('');
         }
     }
 
@@ -364,22 +412,48 @@ export default function BestellingAfronden() {
                                             Klik om bestanden te uploaden
                                         </Typography>
                                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                            PNG, JPG, PDF tot 10MB
+                                            PNG, JPG, JPEG of PDF. Maximaal 4 bestanden, maximaal 10MB per bestand.
                                         </Typography>
                                     </Box>
                                 ) : null}
                             </>
                         )}
+                        {!createdOrder && sendMethod === 'digital' && fileUploadError ? (
+                            <Alert severity="error" sx={{ mt: 2 }}>
+                                {fileUploadError}
+                            </Alert>
+                        ) : null}
                         {!createdOrder && sendMethod === 'digital' && selectedFiles.length > 0 ? (
-                            <Box sx={{ mt: 2 }}>
-                                {selectedFiles.map((file) => (
-                                    <Typography
+                            <Box sx={{ mt: 2, display: 'grid', gap: 1 }}>
+                                {selectedFiles.map((file, index) => (
+                                    <Box
                                         key={`${file.name}-${file.lastModified}`}
-                                        variant="body2"
-                                        sx={{ color: 'text.secondary' }}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: 2,
+                                        }}
                                     >
-                                        {file.name}
-                                    </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                color: 'text.secondary',
+                                                minWidth: 0,
+                                                overflowWrap: 'anywhere',
+                                            }}
+                                        >
+                                            {file.name}
+                                        </Typography>
+                                        <Button
+                                            size="small"
+                                            variant="text"
+                                            onClick={() => handleRemoveSelectedFile(index)}
+                                            sx={{ flexShrink: 0, textTransform: 'none' }}
+                                        >
+                                            Verwijderen
+                                        </Button>
+                                    </Box>
                                 ))}
                             </Box>
                         ) : null}
