@@ -204,5 +204,11 @@ namespace Application.Services
 
             return AuthResult.FailedResult(false, "Inloggen mislukt! Controleer uw gegevens.");
         }
+
+        public async Task<AuthResult> LogoutAsync()
+        {
+            await _signinmanager.SignOutAsync();
+            return AuthResult.SuccessResult(true, "Succesvol uitgelogd", "");
+        }
     }
 }

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import styles from "../Css/Auth.module.css";
+import { API_URL } from "../utils/config";
 
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true );
@@ -30,7 +31,7 @@ export default function AuthPage() {
         e.preventDefault();
         setLoginMessage("");
 
-        const response = await fetch("https://localhost:7050/api/Auth/login", {
+        const response = await fetch(`${API_URL}/api/Auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -71,7 +72,7 @@ export default function AuthPage() {
         }
 
         const response = await fetch(
-            "https://localhost:7050/api/Auth/resend-confirmation",
+            `${API_URL}/api/Auth/resend-confirmation`,
             {
                 method: "POST",
                 headers: {
@@ -97,7 +98,7 @@ export default function AuthPage() {
             return;
         }
 
-        const response = await fetch("https://localhost:7050/api/Auth/register", {
+        const response = await fetch(`${API_URL}/api/Auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",

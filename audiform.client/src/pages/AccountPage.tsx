@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import styles from "../Css/AccountPage.module.css";
 import { getErrorMessage } from "../hooks/ApiHelper";
+import { API_URL } from "../utils/config";
 
 type Address = {
     straat: string;
@@ -13,7 +14,7 @@ const emptyAddress: Address = {
     straat: "",
     postcode: "",
     stad: "",
-    land: ""
+    land: "",
 };
 
 export default function AccountPage() {
@@ -30,17 +31,23 @@ export default function AccountPage() {
     const [editingBilling, setEditingBilling] = useState(false);
     const [editingShipping, setEditingShipping] = useState(false);
 
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [isSavingAddresses, setIsSavingAddresses] = useState(false);
+    const [originalProfile, setOriginalProfile] = useState({
+        fullname: "",
+        email: "",
+        phoneNumber: "",
+        birthDate: "",
+    });
+
     async function fetchAddress(
         addressType: "Billing" | "Shipping",
         setAddress: React.Dispatch<React.SetStateAction<Address>>
     ) {
-        const response = await fetch(
-            `https://localhost:7050/api/Adress/GetAdres/${addressType}`,
-            {
-                method: "GET",
-                credentials: "include",
-            }
-        );
+        const response = await fetch(`${API_URL}/api/Adress/GetAdres/${addressType}`, {
+            method: "GET",
+            credentials: "include",
+        });
 
         if (!response.ok) return;
 
@@ -58,13 +65,10 @@ export default function AccountPage() {
 
     useEffect(() => {
         async function fetchProfile() {
-            const response = await fetch(
-                "https://localhost:7050/api/UserManagement/GetUser",
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
-            );
+            const response = await fetch(`${API_URL}/api/UserManagement/GetUser`, {
+                method: "GET",
+                credentials: "include",
+            });
 
             if (!response.ok) return;
 
@@ -74,6 +78,12 @@ export default function AccountPage() {
             setEmail(data.email || "");
             setPhoneNumber(data.phoneNumber || "");
             setBirthDate(data.dateofbirth || "");
+            setOriginalProfile({
+                fullname: data.fullname || "",
+                email: data.email || "",
+                phoneNumber: data.phoneNumber || "",
+                birthDate: data.dateofbirth || "",
+            });
         }
 
         fetchProfile();
@@ -84,10 +94,21 @@ export default function AccountPage() {
     async function handleSave(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setMessage("");
+        setIsSavingProfile(true);
 
-        const response = await fetch(
-            "https://localhost:7050/api/UserManagement/updateprofile",
-            {
+        try {
+            if (!email.trim()) {
+                setMessage("E-mailadres mag niet leeg zijn.");
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailRegex.test(email)) {
+                setMessage("Vul een geldig e-mailadres in.");
+                return;
+            }
+            const response = await fetch(`${API_URL}/api/UserManagement/updateprofile`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -99,29 +120,83 @@ export default function AccountPage() {
                     phoneNumber,
                     dateofbirth: birthDate,
                 }),
+            });
+
+            if (!response.ok) {
+                const errorMessage = await getErrorMessage(
+                    response,
+                    "Profiel bijwerken mislukt."
+                );
+
+                setMessage(errorMessage);
+                return;
             }
-        );
 
-        if (!response.ok) {
-            const errorMessage = await getErrorMessage(
-                response,
-                "Profiel bijwerken mislukt."
-            );
-
-            setMessage(errorMessage);
-            return;
+            const text = await response.text();
+            setMessage(text || "Profiel succesvol bijgewerkt.");
+        } finally {
+            setIsSavingProfile(false);
         }
-
-        const text = await response.text();
-        setMessage(text || "Profiel succesvol bijgewerkt.");
     }
 
     async function handleSaveAddresses() {
         setMessage("");
+        setIsSavingAddresses(true);
 
-        const response = await fetch(
-            "https://localhost:7050/api/Adress/save-adresses",
-            {
+        try {
+            const validateAddress = (
+                address: Address,
+                addressName: string
+            ): string | null => {
+                const hasAnyField =
+                    address.straat.trim() ||
+                    address.postcode.trim() ||
+                    address.stad.trim() ||
+                    address.land.trim();
+
+                if (!hasAnyField) {
+                    return null; // leeg adres is toegestaan
+                }
+
+                if (!address.straat.trim()) {
+                    return `${addressName}: straat is verplicht.`;
+                }
+
+                if (!address.postcode.trim()) {
+                    return `${addressName}: postcode is verplicht.`;
+                }
+
+                if (!address.stad.trim()) {
+                    return `${addressName}: stad is verplicht.`;
+                }
+
+                if (!address.land.trim()) {
+                    return `${addressName}: land is verplicht.`;
+                }
+
+                return null;
+            };
+
+            const billingError = validateAddress(
+                billingAdress,
+                "Factuuradres"
+            );
+
+            if (billingError) {
+                setMessage(billingError);
+                return;
+            }
+
+            const shippingError = validateAddress(
+                shippingAdress,
+                "Bezorgadres"
+            );
+
+            if (shippingError) {
+                setMessage(shippingError);
+                return;
+            }
+            const response = await fetch(`${API_URL}/api/Adress/save-adresses`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -131,33 +206,44 @@ export default function AccountPage() {
                     billingAdress: billingAdress,
                     shippingAdress: shippingAdress,
                 }),
+            });
+
+            if (!response.ok) {
+                const errorMessage = await getErrorMessage(
+                    response,
+                    "Adressen opslaan mislukt."
+                );
+
+                setMessage(errorMessage);
+                return;
             }
-        );
 
-        if (!response.ok) {
-            const errorMessage = await getErrorMessage(
-                response,
-                "Adressen opslaan mislukt."
-            );
+            const text = await response.text();
 
-            setMessage(errorMessage);
-            return;
+            setEditingBilling(false);
+            setEditingShipping(false);
+            setMessage(text || "Adressen succesvol opgeslagen.");
+        } finally {
+            setIsSavingAddresses(false);
         }
-
-        const text = await response.text();
-
-        setEditingBilling(false);
-        setEditingShipping(false);
-        setMessage(text || "Adressen succesvol opgeslagen.");
     }
-
+    function handleCancelProfile() {
+        setFullname(originalProfile.fullname);
+        setEmail(originalProfile.email);
+        setPhoneNumber(originalProfile.phoneNumber);
+        setBirthDate(originalProfile.birthDate);
+        setMessage("");
+    }
     function renderAddressCard(
         title: string,
         address: Address,
         isEditing: boolean,
         setIsEditing: (value: boolean) => void,
         setAddress: React.Dispatch<React.SetStateAction<Address>>
-    ) {
+    )
+
+
+    {
         const hasAddress =
             address.straat.trim() !== "" ||
             address.postcode.trim() !== "" ||
@@ -171,6 +257,7 @@ export default function AccountPage() {
                         type="button"
                         className={styles.editButton}
                         onClick={() => setIsEditing(!isEditing)}
+                        disabled={isSavingAddresses}
                     >
                         {isEditing ? "Sluiten" : hasAddress ? "Bewerken" : "Nieuw"}
                     </button>
@@ -205,44 +292,36 @@ export default function AccountPage() {
                         <input
                             placeholder="Straat"
                             value={address.straat}
+                            disabled={isSavingAddresses}
                             onChange={(e) =>
-                                setAddress({
-                                    ...address,
-                                    straat: e.target.value,
-                                })
+                                setAddress({ ...address, straat: e.target.value })
                             }
                         />
 
                         <input
                             placeholder="Postcode"
                             value={address.postcode}
+                            disabled={isSavingAddresses}
                             onChange={(e) =>
-                                setAddress({
-                                    ...address,
-                                    postcode: e.target.value,
-                                })
+                                setAddress({ ...address, postcode: e.target.value })
                             }
                         />
 
                         <input
                             placeholder="Stad"
                             value={address.stad}
+                            disabled={isSavingAddresses}
                             onChange={(e) =>
-                                setAddress({
-                                    ...address,
-                                    stad: e.target.value,
-                                })
+                                setAddress({ ...address, stad: e.target.value })
                             }
                         />
 
                         <input
                             placeholder="Land"
                             value={address.land}
+                            disabled={isSavingAddresses}
                             onChange={(e) =>
-                                setAddress({
-                                    ...address,
-                                    land: e.target.value,
-                                })
+                                setAddress({ ...address, land: e.target.value })
                             }
                         />
                     </div>
@@ -253,9 +332,7 @@ export default function AccountPage() {
 
     return (
         <main className={styles.accountPage}>
-            <button className={styles.backButton}>
-                ← Terug naar startpagina
-            </button>
+            <button className={styles.backButton}>← Terug naar startpagina</button>
 
             <h1>Dashboard</h1>
             <p className={styles.subtitle}>
@@ -265,11 +342,7 @@ export default function AccountPage() {
             <div className={styles.tabs}>
                 <button
                     type="button"
-                    className={
-                        activeTab === "personal"
-                            ? styles.activeTab
-                            : styles.tab
-                    }
+                    className={activeTab === "personal" ? styles.activeTab : styles.tab}
                     onClick={() => setActiveTab("personal")}
                 >
                     Persoonlijke gegevens
@@ -277,11 +350,7 @@ export default function AccountPage() {
 
                 <button
                     type="button"
-                    className={
-                        activeTab === "addresses"
-                            ? styles.activeTab
-                            : styles.tab
-                    }
+                    className={activeTab === "addresses" ? styles.activeTab : styles.tab}
                     onClick={() => setActiveTab("addresses")}
                 >
                     Adressen
@@ -296,9 +365,8 @@ export default function AccountPage() {
                                 <label>Volledige naam</label>
                                 <input
                                     value={fullname}
-                                    onChange={(e) =>
-                                        setFullname(e.target.value)
-                                    }
+                                    disabled={isSavingProfile}
+                                    onChange={(e) => setFullname(e.target.value)}
                                 />
                             </div>
 
@@ -307,9 +375,8 @@ export default function AccountPage() {
                                 <input
                                     type="email"
                                     value={email}
-                                    onChange={(e) =>
-                                        setEmail(e.target.value)
-                                    }
+                                    disabled={isSavingProfile}
+                                    onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
 
@@ -317,9 +384,8 @@ export default function AccountPage() {
                                 <label>Telefoonnummer</label>
                                 <input
                                     value={phoneNumber}
-                                    onChange={(e) =>
-                                        setPhoneNumber(e.target.value)
-                                    }
+                                    disabled={isSavingProfile}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
                                 />
                             </div>
 
@@ -328,21 +394,19 @@ export default function AccountPage() {
                                 <input
                                     type="date"
                                     value={birthDate}
-                                    onChange={(e) =>
-                                        setBirthDate(e.target.value)
-                                    }
+                                    disabled={isSavingProfile}
+                                    onChange={(e) => setBirthDate(e.target.value)}
                                 />
                             </div>
                         </div>
 
-                        {message && (
-                            <p className={styles.message}>{message}</p>
-                        )}
+                        {message && <p className={styles.message}>{message}</p>}
 
                         <div className={styles.actions}>
                             <button
                                 type="button"
                                 className={styles.cancelButton}
+                                onClick={handleCancelProfile}
                             >
                                 Annuleren
                             </button>
@@ -350,8 +414,9 @@ export default function AccountPage() {
                             <button
                                 type="submit"
                                 className={styles.saveButton}
+                                disabled={isSavingProfile}
                             >
-                                Opslaan
+                                {isSavingProfile ? "Opslaan..." : "Opslaan"}
                             </button>
                         </div>
                     </form>
@@ -376,17 +441,16 @@ export default function AccountPage() {
                         setShippingAddress
                     )}
 
-                    {message && (
-                        <p className={styles.message}>{message}</p>
-                    )}
+                    {message && <p className={styles.message}>{message}</p>}
 
                     <div className={styles.actions}>
                         <button
                             type="button"
                             className={styles.saveButton}
                             onClick={handleSaveAddresses}
+                            disabled={isSavingAddresses}
                         >
-                            Adressen opslaan
+                            {isSavingAddresses ? "Opslaan..." : "Adressen opslaan"}
                         </button>
                     </div>
                 </section>

@@ -12,6 +12,8 @@ namespace Application.Interfaces
         Task<AuthResult> LoginUserAsync(string email, string password);
         Task<AuthResult> ConfirmEmailAsync(string userId, string token);
         Task<AuthResult> ResendConfirmationEmailAsync(string email);
+
+        Task<AuthResult> LogoutAsync();
         
     }
 }
