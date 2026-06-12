@@ -75,9 +75,7 @@ namespace Application.Services
                 true);
         }
 
-        public async Task<UpdateResult> GetAdress(
-            ApplicationUser loggedinUser,
-            string adresType)
+        public async Task<UpdateResult> GetAdress(ApplicationUser loggedinUser, string adresType)
         {
             var user = await _userManager.FindByIdAsync(loggedinUser.Id);
 
@@ -99,15 +97,20 @@ namespace Application.Services
                     false);
             }
 
-            return UpdateResult.Succesresult(
-                $"{adres.Straat}, {adres.Postcode}, {adres.Stad}, {adres.Land}",
-                true);
+            return UpdateResult.SuccesresultData(
+                $"{adresType} adres gevonden",
+                true,
+                new
+                {
+                    straat = adres.Straat,
+                    postcode = adres.Postcode,
+                    stad = adres.Stad,
+                    land = adres.Land,
+                    adresType = adres.AdresType
+                });
         }
 
-        public async Task<UpdateResult> UpdateAdressAsync(
-            ApplicationUser loggedinUser,
-            Adres updatedAdress,
-            string adresType)
+        public async Task<UpdateResult> UpdateAdressAsync(ApplicationUser loggedinUser,Adres updatedAdress, string adresType)
         {
             var user = await _userManager.FindByIdAsync(loggedinUser.Id);
 

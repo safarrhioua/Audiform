@@ -29,12 +29,37 @@ export default function AccountPage() {
     const [editingBilling, setEditingBilling] = useState(false);
     const [editingShipping, setEditingShipping] = useState(false);
 
+    async function fetchAddress(
+        addressType: "Billing" | "Shipping",
+        setAddress: React.Dispatch<React.SetStateAction<Address>>
+    ) {
+        const response = await fetch(`https://localhost:7050/api/Adress/GetAdres/${addressType}`, {
+            method: "GET",
+            credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const result = await response.json();
+
+        if (!result.success || !result.data) return;
+
+        setAddress({
+            straat: result.data.straat || "",
+            postcode: result.data.postcode || "",
+            stad: result.data.stad || "",
+            land: result.data.land || "",
+        });
+    }
     useEffect(() => {
         async function fetchProfile() {
-            const response = await fetch("https://localhost:7050/api/UserManagement/GetUser", {
-                method: "GET",
-                credentials: "include",
-            });
+            const response = await fetch(
+                "https://localhost:7050/api/UserManagement/GetUser",
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
+            );
 
             if (!response.ok) return;
 
@@ -47,6 +72,10 @@ export default function AccountPage() {
         }
 
         fetchProfile();
+
+        fetchAddress("Billing", setBillingAddress);
+        fetchAddress("Shipping", setShippingAddress);
+
     }, []);
 
     async function handleSave(e: React.FormEvent<HTMLFormElement>) {
@@ -98,7 +127,10 @@ export default function AccountPage() {
         setEditingBilling(false);
         setEditingShipping(false);
         setMessage(text || "Adressen succesvol opgeslagen.");
+
+
     }
+   
 
     function renderAddressCard(
         title: string,
@@ -124,13 +156,7 @@ export default function AccountPage() {
                         {isEditing ? "Sluiten" : hasAddress ? "Bewerken" : "Nieuw"}
                     </button>
 
-                    <button
-                        type="button"
-                        className={styles.deleteButton}
-                        onClick={() => setAddress(emptyAddress)}
-                    >
-                        🗑
-                    </button>
+                    
                 </div>
 
                 <div className={styles.addressTitle}>{title}</div>
