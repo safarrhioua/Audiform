@@ -107,8 +107,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseDefaultFiles();
-app.MapStaticAssets();
+//app.UseDefaultFiles();
+//app.MapStaticAssets();
 
 if (app.Environment.IsDevelopment())
 {
@@ -127,6 +127,6 @@ app.UseAuthorization();
 
 app.MapControllers().RequireCors("ReactDevClient");
 
-app.MapFallbackToFile("/index.html");
+//app.MapFallbackToFile("/index.html");
 
 app.Run();

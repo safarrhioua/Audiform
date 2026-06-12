@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import {
     Alert,
@@ -12,8 +12,12 @@ import {
     Typography,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import CreatedOrderEarSummaryCard from '../components/orders/CreatedOrderEarSummaryCard';
+import EarSummaryCard from '../components/orders/EarSummaryCard';
+import { useCreateEarpieceOrder } from '../hooks/useCreateEarpieceOrder';
 import type { EarSelections } from '../types/EarSelections';
 import type { EarpieceTemplate } from '../types/EarpieceTemplate';
+import { formatSendMethod } from '../utils/orderFormatters';
 
 interface BestellingAfrondenLocationState {
     template?: EarpieceTemplate;
@@ -21,171 +25,6 @@ interface BestellingAfrondenLocationState {
     leftTemplateId?: number;
     rightSelections?: EarSelections;
     leftSelections?: EarSelections;
-}
-
-type OrderSelectionRequest = {
-    ear_side: 'left' | 'right';
-    step_id: number;
-    option_id: number | null;
-    value_text: string | null;
-};
-
-type CreatedOrderSelection = {
-    earSide: 'left' | 'right';
-    stepId: number;
-    stepName: string | null;
-    optionId: number | null;
-    optionName: string | null;
-    valueText: string | null;
-};
-
-type CreatedOrder = {
-    orderId: number;
-    shopOrderId: string;
-    patientName: string;
-    patientNumber: string;
-    deliveryDate: string;
-    remarks: string | null;
-    sendMethod: string | null;
-    uploadedFileNames: string[];
-    selections: CreatedOrderSelection[];
-};
-
-function getOrderSelectionRequests(
-    earSide: 'left' | 'right',
-    selections: EarSelections,
-): OrderSelectionRequest[] {
-    return Object.values(selections).flatMap((stepSelections) =>
-        stepSelections.map((selection) => ({
-            ear_side: earSide,
-            step_id: selection.stepId,
-            option_id: selection.optionId,
-            value_text: selection.valueText,
-        })),
-    );
-}
-
-function getCreatedOrderSelectionRows(
-    selections: CreatedOrderSelection[],
-    earSide: 'left' | 'right',
-) {
-    return selections
-        .filter((selection) => selection.earSide === earSide)
-        .map((selection) => ({
-            label: selection.stepName ?? `Stap ${selection.stepId}`,
-            value: selection.valueText || selection.optionName || '-',
-        }));
-}
-
-function getSelectionRows(selections: EarSelections) {
-    return Object.values(selections).flatMap((stepSelections) =>
-        stepSelections.map((selection) => ({
-            label: selection.stepName,
-            value: selection.valueText || selection.optionName || '-',
-        })),
-    );
-}
-
-function formatSendMethod(sendMethod: string | null) {
-    if (sendMethod === 'digital') {
-        return 'Digitaal versturen';
-    }
-
-    if (sendMethod === 'physical') {
-        return 'Fysiek versturen';
-    }
-
-    return '-';
-}
-
-function EarSummaryCard({
-    title,
-    color,
-    selections,
-}: {
-    title: string;
-    color: string;
-    selections: EarSelections;
-}) {
-    const rows = getSelectionRows(selections);
-
-    return (
-        <Paper
-            sx={{
-                p: 2,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: color,
-                boxShadow: 'none',
-            }}
-        >
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color, mb: 1.5 }}>
-                {title}
-            </Typography>
-            {rows.length > 0 ? (
-                rows.map((row) => (
-                    <Box key={`${row.label}-${row.value}`} sx={{ mb: 1 }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {row.label}
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {row.value}
-                        </Typography>
-                    </Box>
-                ))
-            ) : (
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Geen configuratie gekozen.
-                </Typography>
-            )}
-        </Paper>
-    );
-}
-
-function CreatedOrderEarSummaryCard({
-    title,
-    color,
-    selections,
-    earSide,
-}: {
-    title: string;
-    color: string;
-    selections: CreatedOrderSelection[];
-    earSide: 'left' | 'right';
-}) {
-    const rows = getCreatedOrderSelectionRows(selections, earSide);
-
-    return (
-        <Paper
-            sx={{
-                p: 2,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: color,
-                boxShadow: 'none',
-            }}
-        >
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color, mb: 1.5 }}>
-                {title}
-            </Typography>
-            {rows.length > 0 ? (
-                rows.map((row) => (
-                    <Box key={`${row.label}-${row.value}`} sx={{ mb: 1 }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {row.label}
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {row.value}
-                        </Typography>
-                    </Box>
-                ))
-            ) : (
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Geen configuratie gekozen.
-                </Typography>
-            )}
-        </Paper>
-    );
 }
 
 export default function BestellingAfronden() {
@@ -205,10 +44,32 @@ export default function BestellingAfronden() {
     const [remarks, setRemarks] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [sendMethod, setSendMethod] = useState('physical');
-    const [submitError, setSubmitError] = useState<string | null>(null);
-    const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null);
+    const {
+        createdOrder,
+        submitError,
+        submitSuccess,
+        isSubmitting,
+        handleCompleteOrder,
+    } = useCreateEarpieceOrder({
+        patientName,
+        patientNumber,
+        deliveryDate,
+        remarks,
+        selectedFiles,
+        sendMethod,
+        rightSelections,
+        leftSelections,
+    });
+    const hasOrderConfiguration =
+        Boolean(rightTemplateId || leftTemplateId) ||
+        Object.keys(rightSelections).length > 0 ||
+        Object.keys(leftSelections).length > 0;
+
+    useEffect(() => {
+        if (!hasOrderConfiguration) {
+            navigate('/configuratie', { replace: true });
+        }
+    }, [hasOrderConfiguration, navigate]);
 
     const orderDate = useMemo(
         () =>
@@ -221,7 +82,13 @@ export default function BestellingAfronden() {
     );
 
     function handleFilesChange(event: ChangeEvent<HTMLInputElement>) {
-        setSelectedFiles(Array.from(event.target.files ?? []));
+        const files = event.currentTarget.files
+            ? Array.from(event.currentTarget.files)
+            : [];
+
+        setSelectedFiles(files);
+
+        event.currentTarget.value = '';
     }
 
     function handleSendMethodChange(newSendMethod: string) {
@@ -229,79 +96,6 @@ export default function BestellingAfronden() {
 
         if (newSendMethod === 'physical') {
             setSelectedFiles([]);
-        }
-    }
-
-    async function handleCompleteOrder() {
-        setSubmitError(null);
-        setSubmitSuccess(null);
-
-        if (!patientName.trim() || !patientNumber.trim() || !deliveryDate) {
-            setSubmitError('Vul patiëntnaam, referentie en gewenste leverdatum in.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('patient_name', patientName.trim());
-        formData.append('patient_number', patientNumber.trim());
-        formData.append('delivery_date', deliveryDate);
-        formData.append('remarks', remarks.trim());
-        formData.append('send_method', sendMethod);
-        formData.append(
-            'selections_json',
-            JSON.stringify([
-                ...getOrderSelectionRequests('right', rightSelections),
-                ...getOrderSelectionRequests('left', leftSelections),
-            ]),
-        );
-
-        selectedFiles.forEach((file) => {
-            formData.append('files', file);
-        });
-
-        try {
-            setIsSubmitting(true);
-
-            const response = await fetch('https://localhost:7050/api/earpiece-order', {
-                method: 'POST',
-                credentials: 'include',
-                body: formData,
-            });
-
-            const responseText = await response.text();
-            const responseData = responseText ? parseJsonResponse(responseText) : null;
-
-            if (!response.ok) {
-                throw new Error(
-                    responseData?.error ??
-                    responseData?.message ??
-                    'De bestelling kon niet worden afgerond.',
-                );
-            }
-
-            const createdOrderData = responseData as CreatedOrder;
-            setCreatedOrder(createdOrderData);
-            setSubmitSuccess(
-                createdOrderData.shopOrderId
-                    ? `Bestelling succesvol afgerond. Ordernummer: ${createdOrderData.shopOrderId}`
-                    : 'Bestelling succesvol afgerond.',
-            );
-        } catch (error) {
-            setSubmitError(
-                error instanceof Error
-                    ? error.message
-                    : 'Er ging iets mis bij het afronden van de bestelling.',
-            );
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
-
-    function parseJsonResponse(responseText: string) {
-        try {
-            return JSON.parse(responseText);
-        } catch {
-            return { message: responseText };
         }
     }
 
