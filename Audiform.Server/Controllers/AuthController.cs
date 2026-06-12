@@ -2,6 +2,7 @@
 using Application.Interfaces;
 using Audiform.Server.Requests;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -14,6 +15,7 @@ using RegisterRequest = Audiform.Server.Requests.Registerrequest;
 
 namespace Audiform.Presentation.Server.Controllers
 {
+    
     [EnableCors("frontend")]
     [Route("api/[Controller]")]
     public class AuthController : ControllerBase

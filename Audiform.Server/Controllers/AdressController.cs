@@ -3,6 +3,7 @@ using Application.Services;
 using Audiform.Server.Requests;
 using Domain.Entities;
 using Infrastructure.Repos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ using System.Security.Claims;
 
 namespace Audiform.Server.Controllers
 {
+    [Authorize]
     [EnableCors("frontend")]
     [Route("api/[Controller]")]
     public class AdressController : ControllerBase

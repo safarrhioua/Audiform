@@ -194,7 +194,7 @@ namespace Application.Services
                 return AuthResult.FailedResult(false, "Uw account is nog in behandeling. U ontvangt een e-mail zodra uw account is goedgekeurd.");
             }
                 
-            var result = await _signinmanager.PasswordSignInAsync(loggedinUser.UserName, password, isPersistent: false, lockoutOnFailure: false);
+            var result = await _signinmanager.PasswordSignInAsync(loggedinUser.UserName, password, isPersistent: false, lockoutOnFailure: true);
             if (result.Succeeded)
             {
                 var roles = await _usermanager.GetRolesAsync(loggedinUser);
