@@ -1,8 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Order } from '../types/order';
 
+function isOrderVisible(order: Order): boolean {
+    const oneWeekAfterDelivery = new Date(order.deliveryDate);
+    oneWeekAfterDelivery.setDate(oneWeekAfterDelivery.getDate() + 7);
+    return new Date() <= oneWeekAfterDelivery;
+}
+
+export function getEffectiveStatus(order: Order): string {
+    if (order.state.stateName === 'verzonden') {
+        return new Date(order.deliveryDate) < new Date() ? 'afgeleverd' : 'verzonden';
+    }
+    return order.state.stateName;
+}
+
 export function useOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
+    const [totalCount, setTotalCount] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(true);
     const [query, setQuery] = useState<string>('');
     const [page, setPage] = useState<number>(1);
