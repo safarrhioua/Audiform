@@ -8,6 +8,13 @@ type Address = {
     land: string;
 };
 
+const emptyAddress: Address = {
+    straat: "",
+    postcode: "",
+    stad: "",
+    land: ""
+};
+
 export default function AccountPage() {
     const [fullname, setFullname] = useState("");
     const [email, setEmail] = useState("");
@@ -16,29 +23,43 @@ export default function AccountPage() {
     const [message, setMessage] = useState("");
     const [activeTab, setActiveTab] = useState("personal");
 
-    const [BillingAdress, setBillingAddress] = useState<Address>({
-        straat: "",
-        postcode: "",
-        stad: "",
-        land: ""
-    });
-
-    const [ShippingAdress, setShippingAddress] = useState<Address>({
-        straat: "",
-        postcode: "",
-        stad: "",
-        land: ""
-    });
+    const [billingAdress, setBillingAddress] = useState<Address>(emptyAddress);
+    const [shippingAdress, setShippingAddress] = useState<Address>(emptyAddress);
 
     const [editingBilling, setEditingBilling] = useState(false);
     const [editingShipping, setEditingShipping] = useState(false);
 
+    async function fetchAddress(
+        addressType: "Billing" | "Shipping",
+        setAddress: React.Dispatch<React.SetStateAction<Address>>
+    ) {
+        const response = await fetch(`https://localhost:7050/api/Adress/GetAdres/${addressType}`, {
+            method: "GET",
+            credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const result = await response.json();
+
+        if (!result.success || !result.data) return;
+
+        setAddress({
+            straat: result.data.straat || "",
+            postcode: result.data.postcode || "",
+            stad: result.data.stad || "",
+            land: result.data.land || "",
+        });
+    }
     useEffect(() => {
         async function fetchProfile() {
-            const response = await fetch("https://localhost:7050/api/UserManagement/GetUser", {
-                method: "GET",
-                credentials: "include",
-            });
+            const response = await fetch(
+                "https://localhost:7050/api/UserManagement/GetUser",
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
+            );
 
             if (!response.ok) return;
 
@@ -51,6 +72,10 @@ export default function AccountPage() {
         }
 
         fetchProfile();
+
+        fetchAddress("Billing", setBillingAddress);
+        fetchAddress("Shipping", setShippingAddress);
+
     }, []);
 
     async function handleSave(e: React.FormEvent<HTMLFormElement>) {
@@ -87,8 +112,8 @@ export default function AccountPage() {
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({
-                billingAdress: BillingAdress,
-                BillingAdress: ShippingAdress
+                billingAdress: billingAdress,
+                shippingAdress: shippingAdress
             }),
         });
 
@@ -102,7 +127,10 @@ export default function AccountPage() {
         setEditingBilling(false);
         setEditingShipping(false);
         setMessage(text || "Adressen succesvol opgeslagen.");
+
+
     }
+   
 
     function renderAddressCard(
         title: string,
@@ -111,6 +139,12 @@ export default function AccountPage() {
         setIsEditing: (value: boolean) => void,
         setAddress: React.Dispatch<React.SetStateAction<Address>>
     ) {
+        const hasAddress =
+            address.straat.trim() !== "" ||
+            address.postcode.trim() !== "" ||
+            address.stad.trim() !== "" ||
+            address.land.trim() !== "";
+
         return (
             <div className={styles.addressCard}>
                 <div className={styles.addressActions}>
@@ -119,23 +153,10 @@ export default function AccountPage() {
                         className={styles.editButton}
                         onClick={() => setIsEditing(!isEditing)}
                     >
-                        {isEditing ? "Sluiten" : "Bewerken"}
+                        {isEditing ? "Sluiten" : hasAddress ? "Bewerken" : "Nieuw"}
                     </button>
 
-                    <button
-                        type="button"
-                        className={styles.deleteButton}
-                        onClick={() =>
-                            setAddress({
-                                straat: "",
-                                postcode: "",
-                                stad: "",
-                                land: ""
-                            })
-                        }
-                    >
-                        🗑
-                    </button>
+                    
                 </div>
 
                 <div className={styles.addressTitle}>{title}</div>
@@ -143,15 +164,23 @@ export default function AccountPage() {
                 {!isEditing ? (
                     <>
                         <div className={styles.addressSummary}>
-                            {address.straat || "Geen straat ingevuld"}
-                            {address.postcode && `, ${address.postcode}`}
-                            {address.stad && ` ${address.stad}`}
+                            {hasAddress
+                                ? `${address.straat}, ${address.postcode} ${address.stad}`
+                                : "Geen adres opgeslagen"}
                         </div>
 
                         <div className={styles.addressText}>
-                            {address.straat || "Geen adres opgeslagen"}<br />
-                            {address.postcode} {address.stad}<br />
-                            {address.land}
+                            {hasAddress ? (
+                                <>
+                                    {address.straat}
+                                    <br />
+                                    {address.postcode} {address.stad}
+                                    <br />
+                                    {address.land}
+                                </>
+                            ) : (
+                                "Klik op Nieuw om een adres toe te voegen."
+                            )}
                         </div>
                     </>
                 ) : (
@@ -159,25 +188,33 @@ export default function AccountPage() {
                         <input
                             placeholder="Straat"
                             value={address.straat}
-                            onChange={(e) => setAddress({ ...address, straat: e.target.value })}
+                            onChange={(e) =>
+                                setAddress({ ...address, straat: e.target.value })
+                            }
                         />
 
                         <input
                             placeholder="Postcode"
                             value={address.postcode}
-                            onChange={(e) => setAddress({ ...address, postcode: e.target.value })}
+                            onChange={(e) =>
+                                setAddress({ ...address, postcode: e.target.value })
+                            }
                         />
 
                         <input
                             placeholder="Stad"
                             value={address.stad}
-                            onChange={(e) => setAddress({ ...address, stad: e.target.value })}
+                            onChange={(e) =>
+                                setAddress({ ...address, stad: e.target.value })
+                            }
                         />
 
                         <input
                             placeholder="Land"
                             value={address.land}
-                            onChange={(e) => setAddress({ ...address, land: e.target.value })}
+                            onChange={(e) =>
+                                setAddress({ ...address, land: e.target.value })
+                            }
                         />
                     </div>
                 )}
@@ -194,6 +231,7 @@ export default function AccountPage() {
 
             <div className={styles.tabs}>
                 <button
+                    type="button"
                     className={activeTab === "personal" ? styles.activeTab : styles.tab}
                     onClick={() => setActiveTab("personal")}
                 >
@@ -201,6 +239,7 @@ export default function AccountPage() {
                 </button>
 
                 <button
+                    type="button"
                     className={activeTab === "addresses" ? styles.activeTab : styles.tab}
                     onClick={() => setActiveTab("addresses")}
                 >
@@ -266,7 +305,7 @@ export default function AccountPage() {
                 <section className={styles.addressList}>
                     {renderAddressCard(
                         "Factuuradres",
-                        BillingAdress,
+                        billingAdress,
                         editingBilling,
                         setEditingBilling,
                         setBillingAddress
@@ -274,7 +313,7 @@ export default function AccountPage() {
 
                     {renderAddressCard(
                         "Bezorgadres",
-                        ShippingAdress,
+                        shippingAdress,
                         editingShipping,
                         setEditingShipping,
                         setShippingAddress
