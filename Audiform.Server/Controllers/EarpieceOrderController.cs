@@ -19,7 +19,6 @@ public sealed class EarpieceOrderController(
         try
         {
             var files = request.Files
-                .Where(file => file.Length > 0)
                 .Select(file => new OrderUploadFile(
                     file.FileName,
                     file.ContentType,
