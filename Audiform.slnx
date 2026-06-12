@@ -16,12 +16,12 @@
   <Folder Name="/4. Infrastructure/">
     <Project Path="Infrastructure/Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/Storage/" />
+  <Folder Name="/Storage/orders/" />
   <Project Path="UnitTests/UnitTests.csproj" Id="5c820a9c-6a68-42e6-90ac-7d6c8c4aa521">
     <Build Solution="Debug|*" Project="false" />
   </Project>
   <Project Path="UserTests/UserTests.csproj">
     <Build Solution="Debug|*" Project="false" />
   </Project>
-  <Folder Name="/Storage/" />
-  <Folder Name="/Storage/orders/" />
 </Solution>
