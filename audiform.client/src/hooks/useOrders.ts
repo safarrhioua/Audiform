@@ -20,7 +20,6 @@ export function useOrders() {
     const [loading, setLoading] = useState<boolean>(true);
     const [query, setQuery] = useState<string>('');
     const [page, setPage] = useState<number>(1);
-    const [totalCount, setTotalCount] = useState<number>(0);
 
     const fetchOrders = useCallback((searchQuery: string, currentPage: number) => {
         setLoading(true);

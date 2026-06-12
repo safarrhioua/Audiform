@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import {
     Alert,
@@ -12,8 +12,16 @@ import {
     Typography,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import CreatedOrderEarSummaryCard from '../components/orders/CreatedOrderEarSummaryCard';
+import EarSummaryCard from '../components/orders/EarSummaryCard';
+import { useCreateEarpieceOrder } from '../hooks/useCreateEarpieceOrder';
 import type { EarSelections } from '../types/EarSelections';
 import type { EarpieceTemplate } from '../types/EarpieceTemplate';
+import { formatSendMethod } from '../utils/orderFormatters';
+
+const MAX_FILES = 4;
+const MAX_FILE_SIZE_IN_BYTES = 10 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'application/pdf'];
 
 interface BestellingAfrondenLocationState {
     template?: EarpieceTemplate;
@@ -21,171 +29,6 @@ interface BestellingAfrondenLocationState {
     leftTemplateId?: number;
     rightSelections?: EarSelections;
     leftSelections?: EarSelections;
-}
-
-type OrderSelectionRequest = {
-    ear_side: 'left' | 'right';
-    step_id: number;
-    option_id: number | null;
-    value_text: string | null;
-};
-
-type CreatedOrderSelection = {
-    earSide: 'left' | 'right';
-    stepId: number;
-    stepName: string | null;
-    optionId: number | null;
-    optionName: string | null;
-    valueText: string | null;
-};
-
-type CreatedOrder = {
-    orderId: number;
-    shopOrderId: string;
-    patientName: string;
-    patientNumber: string;
-    deliveryDate: string;
-    remarks: string | null;
-    sendMethod: string | null;
-    uploadedFileNames: string[];
-    selections: CreatedOrderSelection[];
-};
-
-function getOrderSelectionRequests(
-    earSide: 'left' | 'right',
-    selections: EarSelections,
-): OrderSelectionRequest[] {
-    return Object.values(selections).flatMap((stepSelections) =>
-        stepSelections.map((selection) => ({
-            ear_side: earSide,
-            step_id: selection.stepId,
-            option_id: selection.optionId,
-            value_text: selection.valueText,
-        })),
-    );
-}
-
-function getCreatedOrderSelectionRows(
-    selections: CreatedOrderSelection[],
-    earSide: 'left' | 'right',
-) {
-    return selections
-        .filter((selection) => selection.earSide === earSide)
-        .map((selection) => ({
-            label: selection.stepName ?? `Stap ${selection.stepId}`,
-            value: selection.valueText || selection.optionName || '-',
-        }));
-}
-
-function getSelectionRows(selections: EarSelections) {
-    return Object.values(selections).flatMap((stepSelections) =>
-        stepSelections.map((selection) => ({
-            label: selection.stepName,
-            value: selection.valueText || selection.optionName || '-',
-        })),
-    );
-}
-
-function formatSendMethod(sendMethod: string | null) {
-    if (sendMethod === 'digital') {
-        return 'Digitaal versturen';
-    }
-
-    if (sendMethod === 'physical') {
-        return 'Fysiek versturen';
-    }
-
-    return '-';
-}
-
-function EarSummaryCard({
-    title,
-    color,
-    selections,
-}: {
-    title: string;
-    color: string;
-    selections: EarSelections;
-}) {
-    const rows = getSelectionRows(selections);
-
-    return (
-        <Paper
-            sx={{
-                p: 2,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: color,
-                boxShadow: 'none',
-            }}
-        >
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color, mb: 1.5 }}>
-                {title}
-            </Typography>
-            {rows.length > 0 ? (
-                rows.map((row) => (
-                    <Box key={`${row.label}-${row.value}`} sx={{ mb: 1 }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {row.label}
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {row.value}
-                        </Typography>
-                    </Box>
-                ))
-            ) : (
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Geen configuratie gekozen.
-                </Typography>
-            )}
-        </Paper>
-    );
-}
-
-function CreatedOrderEarSummaryCard({
-    title,
-    color,
-    selections,
-    earSide,
-}: {
-    title: string;
-    color: string;
-    selections: CreatedOrderSelection[];
-    earSide: 'left' | 'right';
-}) {
-    const rows = getCreatedOrderSelectionRows(selections, earSide);
-
-    return (
-        <Paper
-            sx={{
-                p: 2,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: color,
-                boxShadow: 'none',
-            }}
-        >
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color, mb: 1.5 }}>
-                {title}
-            </Typography>
-            {rows.length > 0 ? (
-                rows.map((row) => (
-                    <Box key={`${row.label}-${row.value}`} sx={{ mb: 1 }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {row.label}
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {row.value}
-                        </Typography>
-                    </Box>
-                ))
-            ) : (
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Geen configuratie gekozen.
-                </Typography>
-            )}
-        </Paper>
-    );
 }
 
 export default function BestellingAfronden() {
@@ -204,11 +47,34 @@ export default function BestellingAfronden() {
     const [deliveryDate, setDeliveryDate] = useState('');
     const [remarks, setRemarks] = useState('');
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [fileUploadError, setFileUploadError] = useState('');
     const [sendMethod, setSendMethod] = useState('physical');
-    const [submitError, setSubmitError] = useState<string | null>(null);
-    const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null);
+    const {
+        createdOrder,
+        submitError,
+        submitSuccess,
+        isSubmitting,
+        handleCompleteOrder,
+    } = useCreateEarpieceOrder({
+        patientName,
+        patientNumber,
+        deliveryDate,
+        remarks,
+        selectedFiles,
+        sendMethod,
+        rightSelections,
+        leftSelections,
+    });
+    const hasOrderConfiguration =
+        Boolean(rightTemplateId || leftTemplateId) ||
+        Object.keys(rightSelections).length > 0 ||
+        Object.keys(leftSelections).length > 0;
+
+    useEffect(() => {
+        if (!hasOrderConfiguration) {
+            navigate('/configuratie', { replace: true });
+        }
+    }, [hasOrderConfiguration, navigate]);
 
     const orderDate = useMemo(
         () =>
@@ -221,7 +87,55 @@ export default function BestellingAfronden() {
     );
 
     function handleFilesChange(event: ChangeEvent<HTMLInputElement>) {
-        setSelectedFiles(Array.from(event.target.files ?? []));
+        const files = event.currentTarget.files
+            ? Array.from(event.currentTarget.files)
+            : [];
+        const errors: string[] = [];
+
+        if (files.length === 0) {
+            event.currentTarget.value = '';
+            return;
+        }
+
+        const filesWithAllowedTypes = files.filter((file) => {
+            if (ALLOWED_FILE_TYPES.includes(file.type)) {
+                return true;
+            }
+
+            errors.push(`${file.name} heeft geen toegestaan bestandstype.`);
+            return false;
+        });
+
+        const filesWithAllowedSizes = filesWithAllowedTypes.filter((file) => {
+            if (file.size <= MAX_FILE_SIZE_IN_BYTES) {
+                return true;
+            }
+
+            errors.push(`${file.name} is groter dan 10MB.`);
+            return false;
+        });
+
+        const availableSlots = MAX_FILES - selectedFiles.length;
+        const filesToAdd = filesWithAllowedSizes.slice(0, Math.max(availableSlots, 0));
+
+        if (filesWithAllowedSizes.length > availableSlots) {
+            errors.push(`U kunt maximaal ${MAX_FILES} bestanden toevoegen.`);
+        }
+
+        if (filesToAdd.length > 0) {
+            setSelectedFiles((currentFiles) => [...currentFiles, ...filesToAdd]);
+        }
+
+        setFileUploadError(errors.join(' '));
+
+        event.currentTarget.value = '';
+    }
+
+    function handleRemoveSelectedFile(fileIndex: number) {
+        setSelectedFiles((currentFiles) =>
+            currentFiles.filter((_, index) => index !== fileIndex),
+        );
+        setFileUploadError('');
     }
 
     function handleSendMethodChange(newSendMethod: string) {
@@ -229,79 +143,7 @@ export default function BestellingAfronden() {
 
         if (newSendMethod === 'physical') {
             setSelectedFiles([]);
-        }
-    }
-
-    async function handleCompleteOrder() {
-        setSubmitError(null);
-        setSubmitSuccess(null);
-
-        if (!patientName.trim() || !patientNumber.trim() || !deliveryDate) {
-            setSubmitError('Vul patiëntnaam, referentie en gewenste leverdatum in.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('patient_name', patientName.trim());
-        formData.append('patient_number', patientNumber.trim());
-        formData.append('delivery_date', deliveryDate);
-        formData.append('remarks', remarks.trim());
-        formData.append('send_method', sendMethod);
-        formData.append(
-            'selections_json',
-            JSON.stringify([
-                ...getOrderSelectionRequests('right', rightSelections),
-                ...getOrderSelectionRequests('left', leftSelections),
-            ]),
-        );
-
-        selectedFiles.forEach((file) => {
-            formData.append('files', file);
-        });
-
-        try {
-            setIsSubmitting(true);
-
-            const response = await fetch('https://localhost:7050/api/earpiece-order', {
-                method: 'POST',
-                credentials: 'include',
-                body: formData,
-            });
-
-            const responseText = await response.text();
-            const responseData = responseText ? parseJsonResponse(responseText) : null;
-
-            if (!response.ok) {
-                throw new Error(
-                    responseData?.error ??
-                    responseData?.message ??
-                    'De bestelling kon niet worden afgerond.',
-                );
-            }
-
-            const createdOrderData = responseData as CreatedOrder;
-            setCreatedOrder(createdOrderData);
-            setSubmitSuccess(
-                createdOrderData.shopOrderId
-                    ? `Bestelling succesvol afgerond. Ordernummer: ${createdOrderData.shopOrderId}`
-                    : 'Bestelling succesvol afgerond.',
-            );
-        } catch (error) {
-            setSubmitError(
-                error instanceof Error
-                    ? error.message
-                    : 'Er ging iets mis bij het afronden van de bestelling.',
-            );
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
-
-    function parseJsonResponse(responseText: string) {
-        try {
-            return JSON.parse(responseText);
-        } catch {
-            return { message: responseText };
+            setFileUploadError('');
         }
     }
 
@@ -570,22 +412,48 @@ export default function BestellingAfronden() {
                                             Klik om bestanden te uploaden
                                         </Typography>
                                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                            PNG, JPG, PDF tot 10MB
+                                            PNG, JPG, JPEG of PDF. Maximaal 4 bestanden, maximaal 10MB per bestand.
                                         </Typography>
                                     </Box>
                                 ) : null}
                             </>
                         )}
+                        {!createdOrder && sendMethod === 'digital' && fileUploadError ? (
+                            <Alert severity="error" sx={{ mt: 2 }}>
+                                {fileUploadError}
+                            </Alert>
+                        ) : null}
                         {!createdOrder && sendMethod === 'digital' && selectedFiles.length > 0 ? (
-                            <Box sx={{ mt: 2 }}>
-                                {selectedFiles.map((file) => (
-                                    <Typography
+                            <Box sx={{ mt: 2, display: 'grid', gap: 1 }}>
+                                {selectedFiles.map((file, index) => (
+                                    <Box
                                         key={`${file.name}-${file.lastModified}`}
-                                        variant="body2"
-                                        sx={{ color: 'text.secondary' }}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: 2,
+                                        }}
                                     >
-                                        {file.name}
-                                    </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                color: 'text.secondary',
+                                                minWidth: 0,
+                                                overflowWrap: 'anywhere',
+                                            }}
+                                        >
+                                            {file.name}
+                                        </Typography>
+                                        <Button
+                                            size="small"
+                                            variant="text"
+                                            onClick={() => handleRemoveSelectedFile(index)}
+                                            sx={{ flexShrink: 0, textTransform: 'none' }}
+                                        >
+                                            Verwijderen
+                                        </Button>
+                                    </Box>
                                 ))}
                             </Box>
                         ) : null}
