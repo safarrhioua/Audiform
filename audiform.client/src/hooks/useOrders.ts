@@ -26,32 +26,33 @@ export function useOrders() {
         const url = searchQuery.trim()
             ? `https://localhost:7050/api/orders/search?q=${encodeURIComponent(searchQuery)}`
             : `https://localhost:7050/api/orders?page=${currentPage}&pageSize=20`;
-
+ 
         fetch(url, { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
                 if (searchQuery.trim()) {
-                    setOrders(data);
-                    setTotalCount(data.length);
+                    const results = data as Order[];
+                    setOrders(results);
+                    setTotalCount(results.length);
                 } else {
-                    setOrders(data.items);
+                    setOrders(data.items as Order[]);
                     setTotalCount(data.totalCount);
                 }
                 setLoading(false);
             });
     }, []);
-
+ 
     const handleSetQuery = useCallback((newQuery: string) => {
         setQuery(newQuery);
-        setPage(1); // bij nieuw zoekwoord altijd terug naar pagina 1
+        setPage(1);
     }, []);
-
+ 
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchOrders(query, page);
         }, 400);
         return () => clearTimeout(timer);
     }, [query, page, fetchOrders]);
-
+ 
     return { orders, loading, query, setQuery: handleSetQuery, page, setPage, totalCount };
 }
