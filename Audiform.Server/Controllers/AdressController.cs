@@ -22,23 +22,56 @@ namespace Audiform.Server.Controllers
             _adressmanagement = adressmanagement;
             _usermanager = usermanager;
         }
-
         [HttpPost("save-adresses")]
         public async Task<IActionResult> AddNewAdresAsync([FromBody] AdressRequest adressRequest)
         {
             var loggedinuser = await _usermanager.GetUserAsync(User);
-            if(loggedinuser == null)
+
+            if (loggedinuser == null)
             {
                 return BadRequest("Gebruiker is niet ingelogd");
             }
-            var billingresult = await _adressmanagement.AddNewAdressAsync(loggedinuser, adressRequest.billingAdress, "Billing");
-            var shippingresult = await _adressmanagement.AddNewAdressAsync(loggedinuser, adressRequest.shippingAdress, "Shipping");
 
-            if (!billingresult.Success)
-                return BadRequest(billingresult.Message);
+            var hasBillingAddress =
+                adressRequest.billingAdress != null &&
+                !string.IsNullOrWhiteSpace(adressRequest.billingAdress.Straat);
 
-            if (!shippingresult.Success)
-                return BadRequest(shippingresult.Message);
+            var hasShippingAddress =
+                adressRequest.shippingAdress != null &&
+                !string.IsNullOrWhiteSpace(adressRequest.shippingAdress.Straat);
+
+            if (!hasBillingAddress && !hasShippingAddress)
+            {
+                return BadRequest("Vul minimaal één adres in.");
+            }
+
+            if (hasBillingAddress)
+            {
+                var billingresult = await _adressmanagement.AddNewAdressAsync(
+                    loggedinuser,
+                    adressRequest.billingAdress,
+                    "Billing"
+                );
+
+                if (!billingresult.Success)
+                {
+                    return BadRequest(billingresult.Message);
+                }
+            }
+
+            if (hasShippingAddress)
+            {
+                var shippingresult = await _adressmanagement.AddNewAdressAsync(
+                    loggedinuser,
+                    adressRequest.shippingAdress,
+                    "Shipping"
+                );
+
+                if (!shippingresult.Success)
+                {
+                    return BadRequest(shippingresult.Message);
+                }
+            }
 
             return Ok("Adressen succesvol opgeslagen.");
         }

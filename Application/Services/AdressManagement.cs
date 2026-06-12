@@ -2,123 +2,176 @@
 using Application.IRepo;
 using Application.Result;
 using Domain.Entities;
-
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Application.Services
 {
-
     public class AdressManagement : IAdressManagement
     {
-       private readonly UserManager<ApplicationUser> _userManager;
-       private readonly IAdressRepo _adressrepo;
-        public AdressManagement(UserManager<ApplicationUser> usermanager, IAdressRepo adressrepo)
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IAdressRepo _adressrepo;
+
+        public AdressManagement(
+            UserManager<ApplicationUser> usermanager,
+            IAdressRepo adressrepo)
         {
             _userManager = usermanager;
-          
             _adressrepo = adressrepo;
         }
 
-        public async Task<UpdateResult> AddNewAdressAsync(ApplicationUser loggedinUser, Adres newadres,string AdresType)
+        public async Task<UpdateResult> AddNewAdressAsync(
+            ApplicationUser loggedinUser,
+            Adres newadres,
+            string adresType)
         {
-            var user =  await _userManager.FindByIdAsync(loggedinUser.Id);
+            var user = await _userManager.FindByIdAsync(loggedinUser.Id);
+
             if (user == null)
             {
-                return UpdateResult.FailedSucces("Deze Gebruiker is niet gevonden!", false); 
+                return UpdateResult.FailedSucces(
+                    "Deze gebruiker is niet gevonden!",
+                    false);
             }
 
-            if (string.IsNullOrWhiteSpace(newadres.Straat))
+            var validationResult = ValidateAdres(newadres);
+
+            if (!validationResult.Success)
             {
-                return UpdateResult.FailedSucces("Straat is verplicht", false);
-            }
-            if (string.IsNullOrWhiteSpace(newadres.Postcode))
-            {
-                return UpdateResult.FailedSucces("Postcode is verplicht", false);
-            }
-            if (string.IsNullOrWhiteSpace(newadres.Stad))
-            {
-                return UpdateResult.FailedSucces("Stad is verplicht", false);
-            }
-            if (string.IsNullOrWhiteSpace(newadres.Land))
-            {
-                return UpdateResult.FailedSucces("land is verplicht", false);
+                return validationResult;
             }
 
-            var existedadres = await _adressrepo.GetAdress(loggedinUser.Id,AdresType);
-            if(existedadres != null)
+            var existingAdres = await _adressrepo.GetAdress(
+                loggedinUser.Id,
+                adresType);
+
+            if (existingAdres == null)
             {
-                return UpdateResult.FailedSucces("Jij hebt al een adres", false);
+                var adres = new Adres
+                {
+                    Straat = newadres.Straat,
+                    Postcode = newadres.Postcode,
+                    Stad = newadres.Stad,
+                    Land = newadres.Land,
+                    UserId = loggedinUser.Id,
+                    AdresType = adresType
+                };
+
+                await _adressrepo.AddNewAdresAsync(
+                    loggedinUser.Id,
+                    adres);
+
+                return UpdateResult.Succesresult(
+                    $"{adresType} adres succesvol toegevoegd!",
+                    true);
             }
-            var adress = new Adres
-            {
-               
-                Straat = newadres.Straat,
-                Postcode = newadres.Postcode,
-                Stad = newadres.Stad,
-                Land = newadres.Land,
-                UserId =loggedinUser.Id,
-                AdresType=AdresType
 
-            };
+            await _adressrepo.UpdateAdressAsync(
+                loggedinUser.Id,
+                newadres,
+                adresType);
 
-            await _adressrepo.AddNewAdresAsync(loggedinUser.Id, adress);
-            return UpdateResult.Succesresult("Adres succesvol toegevoegd!", true);
-
+            return UpdateResult.Succesresult(
+                $"{adresType} adres succesvol bijgewerkt!",
+                true);
         }
 
-        public async Task<UpdateResult> GetAdress(ApplicationUser loggedinUser, string AdresType)
+        public async Task<UpdateResult> GetAdress(ApplicationUser loggedinUser, string adresType)
         {
             var user = await _userManager.FindByIdAsync(loggedinUser.Id);
-            if(user == null)
-            {
-                return UpdateResult.FailedSucces("Deze gebruiker is niet gevonden", false);
-            }
-            
-            var adres = await _adressrepo.GetAdress(loggedinUser.Id,AdresType);
-            if(adres == null)
-            {
-                return UpdateResult.FailedSucces("Deze gebruiker heeft nog geen ades", false);
-            }
-            return UpdateResult.Succesresult($"adres is {adres.Straat},{adres.Postcode},{adres.Stad}, ,{adres.Land}", true);
 
-        }
-
-        public async Task<UpdateResult> UpdateAdressAsync(ApplicationUser loggedinUser, Adres updatedAdress, string AdresType)
-        {
-            var user = await _userManager.FindByIdAsync(loggedinUser.Id);
-            if(user == null)
+            if (user == null)
             {
-                return UpdateResult.FailedSucces("Jij bent niet ingelogd!", false);
+                return UpdateResult.FailedSucces(
+                    "Deze gebruiker is niet gevonden",
+                    false);
             }
-            var adres = _adressrepo.GetAdress(loggedinUser.Id,AdresType);
+
+            var adres = await _adressrepo.GetAdress(
+                loggedinUser.Id,
+                adresType);
+
             if (adres == null)
             {
-                return UpdateResult.FailedSucces("Je hebt nog geen adres om aan te passen", false);
+                return UpdateResult.FailedSucces(
+                    $"Deze gebruiker heeft nog geen {adresType} adres",
+                    false);
             }
 
-            if (string.IsNullOrWhiteSpace(updatedAdress.Straat))
+            return UpdateResult.SuccesresultData(
+                $"{adresType} adres gevonden",
+                true,
+                new
+                {
+                    straat = adres.Straat,
+                    postcode = adres.Postcode,
+                    stad = adres.Stad,
+                    land = adres.Land,
+                    adresType = adres.AdresType
+                });
+        }
+
+        public async Task<UpdateResult> UpdateAdressAsync(ApplicationUser loggedinUser,Adres updatedAdress, string adresType)
+        {
+            var user = await _userManager.FindByIdAsync(loggedinUser.Id);
+
+            if (user == null)
+            {
+                return UpdateResult.FailedSucces(
+                    "Jij bent niet ingelogd!",
+                    false);
+            }
+
+            var existingAdres = await _adressrepo.GetAdress(
+                loggedinUser.Id,
+                adresType);
+
+            if (existingAdres == null)
+            {
+                return UpdateResult.FailedSucces(
+                    "Je hebt nog geen adres om aan te passen",
+                    false);
+            }
+
+            var validationResult = ValidateAdres(updatedAdress);
+
+            if (!validationResult.Success)
+            {
+                return validationResult;
+            }
+
+            await _adressrepo.UpdateAdressAsync(
+                loggedinUser.Id,
+                updatedAdress,
+                adresType);
+
+            return UpdateResult.Succesresult(
+                $"{adresType} adres succesvol bijgewerkt!",
+                true);
+        }
+
+        private UpdateResult ValidateAdres(Adres adres)
+        {
+            if (string.IsNullOrWhiteSpace(adres.Straat))
             {
                 return UpdateResult.FailedSucces("Straat is verplicht", false);
             }
-            if (string.IsNullOrWhiteSpace(updatedAdress.Postcode))
+
+            if (string.IsNullOrWhiteSpace(adres.Postcode))
             {
                 return UpdateResult.FailedSucces("Postcode is verplicht", false);
             }
-            if (string.IsNullOrWhiteSpace(updatedAdress.Stad))
+
+            if (string.IsNullOrWhiteSpace(adres.Stad))
             {
                 return UpdateResult.FailedSucces("Stad is verplicht", false);
             }
-            if (string.IsNullOrWhiteSpace(updatedAdress .Land))
+
+            if (string.IsNullOrWhiteSpace(adres.Land))
             {
-                return UpdateResult.FailedSucces("land is verplicht", false);
+                return UpdateResult.FailedSucces("Land is verplicht", false);
             }
 
-            await _adressrepo.UpdateAdressAsync(loggedinUser.Id, updatedAdress,AdresType);
-
-            return UpdateResult.Succesresult($"adres is {updatedAdress.Straat},{updatedAdress.Postcode},{updatedAdress.Stad}, ,{updatedAdress.Land}", true);
+            return UpdateResult.Succesresult("Adres is geldig", true);
         }
     }
 }
