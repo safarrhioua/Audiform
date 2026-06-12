@@ -37,6 +37,7 @@ public sealed class CreateEarpieceOrderService(
         CancellationToken cancellationToken)
     {
         ValidateRequiredOrderFields(request);
+        OrderUploadFileValidator.Validate(request.Files);
 
         var selectionInputs = ParseSelections(request.SelectionsJson!);
         var selections = await CreateValidatedSelectionsAsync(selectionInputs, cancellationToken);

@@ -12,6 +12,8 @@ import type { EarpieceTemplate } from '../types/EarpieceTemplate';
 import { getMissingRequiredStepIds } from '../utils/requiredStepValidationUtils';
 import { getVisibleConfiguration } from '../utils/visibleConfigurationUtils';
 
+type EarSide = 'right' | 'left';
+
 interface ConfiguratieLocationState {
     template?: EarpieceTemplate;
     rightTemplateId?: number;
@@ -100,6 +102,60 @@ export default function Configuratiepagina() {
     const hasMissingRequiredSteps =
         missingRightRequiredStepIds.length > 0 || missingLeftRequiredStepIds.length > 0;
     const hasSelectedTemplate = Boolean(rightTemplateId || leftTemplateId);
+
+    function getEarSideTemplateId(side: EarSide) {
+        return side === 'right' ? rightTemplateId : leftTemplateId;
+    }
+
+    function getEarSideSelections(side: EarSide) {
+        return side === 'right' ? rightSelections : leftSelections;
+    }
+
+    function hasCopyableData(side: EarSide) {
+        return Boolean(getEarSideTemplateId(side));
+    }
+
+    function hasEarSideInput(side: EarSide) {
+        return (
+            Boolean(getEarSideTemplateId(side)) ||
+            Object.keys(getEarSideSelections(side)).length > 0
+        );
+    }
+
+    function copyEarSideSelection(fromSide: EarSide, toSide: EarSide) {
+        if (!hasCopyableData(fromSide)) {
+            return;
+        }
+
+        const toSideLabel = toSide === 'right' ? 'Rechts' : 'Links';
+
+        if (
+            hasEarSideInput(toSide) &&
+            !window.confirm(
+                `${toSideLabel} is al ingevuld. Wil je de bestaande keuzes overschrijven?`,
+            )
+        ) {
+            return;
+        }
+
+        const fromTemplateId = getEarSideTemplateId(fromSide);
+        const fromSelections = getEarSideSelections(fromSide);
+        const copiedSelections = Object.fromEntries(
+            Object.entries(fromSelections).map(([stepId, selections]) => [
+                stepId,
+                selections.map((selection) => ({ ...selection })),
+            ]),
+        );
+
+        if (toSide === 'right') {
+            setRightTemplateId(fromTemplateId);
+            setRightSelections(copiedSelections);
+            return;
+        }
+
+        setLeftTemplateId(fromTemplateId);
+        setLeftSelections(copiedSelections);
+    }
 
     function handleContinueToOrder() {
         setValidationAttempted(true);
@@ -229,6 +285,11 @@ export default function Configuratiepagina() {
                     error={leftConfiguration.configurationError}
                     selections={leftSelections}
                     invalidStepIds={validationAttempted ? missingLeftRequiredStepIds : []}
+                    copyAction={{
+                        label: 'Kopieer van rechts',
+                        disabled: !hasCopyableData('right'),
+                        onClick: () => copyEarSideSelection('right', 'left'),
+                    }}
                     onTemplateChange={(newTemplateId) => {
                         setLeftTemplateId(newTemplateId);
                         setLeftSelections({});
