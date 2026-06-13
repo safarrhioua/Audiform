@@ -10,10 +10,13 @@ using Microsoft.AspNetCore.WebUtilities;
 using Domain.Entities;
 using Application.Result;
 using Application.IRepo;
+using Microsoft.EntityFrameworkCore.Storage.Internal;
 
 namespace Application.Services
 {
+
     public class AuthService : IAuthService
+
     {
         private readonly UserManager<ApplicationUser> _usermanager;
         private readonly SignInManager<ApplicationUser> _signinmanager;
@@ -209,6 +212,47 @@ namespace Application.Services
         {
             await _signinmanager.SignOutAsync();
             return AuthResult.SuccessResult(true, "Succesvol uitgelogd", "");
+        }
+
+        public async Task<AuthResult> ForgotPassword(string email)
+        {
+            var user = await _usermanager.FindByEmailAsync(email);
+            if(user == null)
+            {
+                return AuthResult.FailedResult(false, "Er bestaat geen account met dit e-mail adres");
+            }
+
+            var token = await _usermanager.GeneratePasswordResetTokenAsync(user);
+            var encodedtoken = Uri.EscapeDataString(token);
+            var encodedemail = Uri.EscapeDataString(email);
+
+            var resetlink = $"https://localhost:60942/reset-password?email={encodedemail}&token={encodedtoken}";
+
+            await _confirmationservice.SendPasswordResetEmailAsync(email, resetlink);
+
+            return AuthResult.SuccessResult(true, "Als dit e-mailadres bestaat, is er een resetlink verstuurd","");
+        }
+
+        public async Task<AuthResult> ResetPasswordAsync(string email, string token, string newPassword)
+        {
+            var loggedinUser = await _usermanager.FindByEmailAsync(email);
+            if (loggedinUser == null)
+            {
+                return AuthResult.FailedResult(false, "Er bestaat geen account met dit e-mail adres");
+            }
+
+            var result = await _usermanager.ResetPasswordAsync(loggedinUser, token, newPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+
+                return AuthResult.FailedResult(false, errors);
+            }
+
+            return AuthResult.SuccessResult(
+               true, "Wachtwoord succesvol gewijzigd.",""
+                );
         }
     }
 }

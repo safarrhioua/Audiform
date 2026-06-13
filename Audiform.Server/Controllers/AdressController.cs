@@ -18,10 +18,7 @@ namespace Audiform.Server.Controllers
         private readonly UserManager<ApplicationUser> _usermanager;
         private readonly ILogger<AdressController> _logger;
 
-        public AdressController(
-            IAdressManagement adressmanagement,
-            UserManager<ApplicationUser> usermanager,
-            ILogger<AdressController> logger)
+        public AdressController(IAdressManagement adressmanagement,UserManager<ApplicationUser> usermanager, ILogger<AdressController> logger)
         {
             _adressmanagement = adressmanagement;
             _usermanager = usermanager;
@@ -44,12 +41,22 @@ namespace Audiform.Server.Controllers
                 loggedinuser.Id);
 
             var hasBillingAddress =
-                adressRequest.billingAdress != null &&
-                !string.IsNullOrWhiteSpace(adressRequest.billingAdress.Straat);
+      adressRequest.billingAdress != null &&
+      (
+          !string.IsNullOrWhiteSpace(adressRequest.billingAdress.Straat) ||
+          !string.IsNullOrWhiteSpace(adressRequest.billingAdress.Postcode) ||
+          !string.IsNullOrWhiteSpace(adressRequest.billingAdress.Stad) ||
+          !string.IsNullOrWhiteSpace(adressRequest.billingAdress.Land)
+      );
 
             var hasShippingAddress =
                 adressRequest.shippingAdress != null &&
-                !string.IsNullOrWhiteSpace(adressRequest.shippingAdress.Straat);
+                (
+                    !string.IsNullOrWhiteSpace(adressRequest.shippingAdress.Straat) ||
+                    !string.IsNullOrWhiteSpace(adressRequest.shippingAdress.Postcode) ||
+                    !string.IsNullOrWhiteSpace(adressRequest.shippingAdress.Stad) ||
+                    !string.IsNullOrWhiteSpace(adressRequest.shippingAdress.Land)
+                );
 
             if (!hasBillingAddress && !hasShippingAddress)
             {

@@ -2,6 +2,7 @@
 using Audiform.Server.Requests;
 using Domain.Entities;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using RegisterRequest = Audiform.Server.Requests.Registerrequest;
@@ -187,6 +188,29 @@ namespace Audiform.Presentation.Server.Controllers
             });
         }
 
+        [HttpPost("Forgot-Password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest forgotPasswordRequest)
+        {
+            var result = await _authService.ForgotPassword(forgotPasswordRequest.Email);
+
+            if (!result.Success)
+            {
+                return BadRequest(result.Message);
+            }
+            return Ok(result.Message);
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordrequest resetPasswordRequest)
+        {
+            var resetresult = await _authService.ResetPasswordAsync(resetPasswordRequest.Email, resetPasswordRequest.Token, resetPasswordRequest.NewPassword);
+            if (!resetresult.Success)
+            {
+                return BadRequest(resetresult.Message);
+            }
+            return Ok(resetresult.Message);
+        }
+
         [HttpPost("Logout")]
         public async Task<IActionResult> LogoutAsync()
         {
@@ -197,5 +221,7 @@ namespace Audiform.Presentation.Server.Controllers
             }
             return Ok(result.Message);
         }
+
+
     }
 }

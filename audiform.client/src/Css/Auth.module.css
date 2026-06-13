@@ -151,34 +151,44 @@
     }
 
 .messageError {
-    margin-top: 18px;
-    margin-bottom: 20px;
-    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    background: #ffffff;
+    border: 2px solid #ffccd5;
     border-radius: 10px;
-    border-color: #ffe5e5;
-    color: #ffe5e5;
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.6;
-    width: 100%;
-    max-width: 420px;
-    box-sizing: border-box;
+    color: #ef476f;
+    font-size: 14px;
+    font-weight: 500;
 }
 
+    .messageError::before {
+        content: "⊖";
+        font-size: 14px;
+        color: #ef476f;
+    }
+
 .messageSuccess {
-    margin-top: 18px;
-    margin-bottom: 20px;
-    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    background: #ffffff;
+    border: 2px solid #b7ebc6;
     border-radius: 10px;
-    background: #e8f7ec;
-    color: #2e7d32;
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.6;
-    width: 100%;
-    max-width: 420px;
-    box-sizing: border-box;
+    color: #2d9c5a;
+    font-size: 14px;
+    font-weight: 500;
 }
+
+    .messageSuccess::before {
+        content: "✓";
+        font-size: 14px;
+        color: #2d9c5a;
+    }
 .selectInput {
     height: 36px;
     border: none;
@@ -190,5 +200,23 @@
     font-size: 14px;
 
 }
+.passwordHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
 
+.forgotPassword {
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #111827;
+    transition: 0.2s;
+}
+
+    .forgotPassword:hover {
+        color: #2563eb;
+        text-decoration: underline;
+    }
 

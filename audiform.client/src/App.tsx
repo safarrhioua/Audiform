@@ -8,6 +8,9 @@ import Dashboard from './pages/Dashboard';
 import OrdersPage from './pages/OrdersPage';
 import Configuratiepagina from './pages/Configuratiepagina';
 import BestellingAfronden from './pages/BestellingAfronden';
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
     return (
@@ -16,14 +19,17 @@ export default function App() {
                 <Route path="/" element={<AuthPage />} />
                 <Route path="/login" element={<AuthPage />} />
                 <Route path="/register" element={<AuthPage />} />
-                <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-                <Route path="/account" element={<Layout><AccountPage /></Layout>} />
-                <Route path="/medewerkerportaal" element={<Layout><MedewerkerPortaal /></Layout>} />
-                <Route path="/orders" element={<Layout><OrdersPage /></Layout>} />
-                <Route path="/bestelpagina" element={<Layout><Bestelpagina /></Layout>} />
-                <Route path="/configuratie" element={<Layout><Configuratiepagina /></Layout>} />
-                <Route path="/configuratie/:templateId" element={<Layout><Configuratiepagina /></Layout>} />
-                <Route path="/bestelling-afronden" element={<Layout><BestellingAfronden /></Layout>} />
+                <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+                <Route path="/account" element={<ProtectedRoute><Layout><AccountPage /></Layout></ProtectedRoute>} />
+                <Route path="/medewerkerportaal" element={<ProtectedRoute><Layout><MedewerkerPortaal /></Layout></ProtectedRoute>} />
+                <Route path="/orders" element={<ProtectedRoute><Layout><OrdersPage /></Layout></ProtectedRoute>} />
+                <Route path="/bestelpagina" element={<ProtectedRoute><Layout><Bestelpagina /></Layout></ProtectedRoute>} />
+                <Route path="/configuratie" element={<ProtectedRoute><Layout><Configuratiepagina /></Layout></ProtectedRoute>} />
+                <Route path="/configuratie/:templateId" element={<ProtectedRoute><Layout><Configuratiepagina /></Layout></ProtectedRoute>} />
+                <Route path="/bestelling-afronden" element={<ProtectedRoute><Layout><BestellingAfronden /></Layout></ProtectedRoute>} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+
             </Routes>
         </BrowserRouter>
     );

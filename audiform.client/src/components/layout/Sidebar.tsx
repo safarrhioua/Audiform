@@ -56,6 +56,7 @@ export default function Sidebar() {
 
             if (response.ok) {
                 navigate("/login");
+                localStorage.removeItem("isLoggedIn");
                 return;
             }
 

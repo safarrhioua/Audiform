@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import styles from "../Css/AccountPage.module.css";
 import { getErrorMessage } from "../hooks/ApiHelper";
 import { API_URL } from "../utils/config";
+import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "../hooks/UsePageTitle";
 
 type Address = {
     straat: string;
@@ -18,13 +20,21 @@ const emptyAddress: Address = {
 };
 
 export default function AccountPage() {
+    
     const [fullname, setFullname] = useState("");
     const [email, setEmail] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
     const [birthDate, setBirthDate] = useState("");
-    const [message, setMessage] = useState("");
-    const [activeTab, setActiveTab] = useState("personal");
 
+    const [message, setMessage] = useState("");
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    const [activeTab, setActiveTab] = useState("personal");
+    usePageTitle(
+        activeTab === "personal"
+            ? "Persoonlijke gegevens"
+            : "Adressen"
+    );
     const [billingAdress, setBillingAddress] = useState<Address>(emptyAddress);
     const [shippingAdress, setShippingAddress] = useState<Address>(emptyAddress);
 
@@ -33,12 +43,24 @@ export default function AccountPage() {
 
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isSavingAddresses, setIsSavingAddresses] = useState(false);
+
     const [originalProfile, setOriginalProfile] = useState({
         fullname: "",
         email: "",
         phoneNumber: "",
         birthDate: "",
     });
+
+    const navigate = useNavigate();
+    function showError(text: string) {
+        setIsSuccess(false);
+        setMessage(text);
+    }
+
+    function showSuccess(text: string) {
+        setIsSuccess(true);
+        setMessage(text);
+    }
 
     async function fetchAddress(
         addressType: "Billing" | "Shipping",
@@ -78,6 +100,7 @@ export default function AccountPage() {
             setEmail(data.email || "");
             setPhoneNumber(data.phoneNumber || "");
             setBirthDate(data.dateofbirth || "");
+
             setOriginalProfile({
                 fullname: data.fullname || "",
                 email: data.email || "",
@@ -98,16 +121,17 @@ export default function AccountPage() {
 
         try {
             if (!email.trim()) {
-                setMessage("E-mailadres mag niet leeg zijn.");
+                showError("E-mailadres mag niet leeg zijn.");
                 return;
             }
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
             if (!emailRegex.test(email)) {
-                setMessage("Vul een geldig e-mailadres in.");
+                showError("Vul een geldig e-mailadres in.");
                 return;
             }
+
             const response = await fetch(`${API_URL}/api/UserManagement/updateprofile`, {
                 method: "PUT",
                 headers: {
@@ -128,15 +152,56 @@ export default function AccountPage() {
                     "Profiel bijwerken mislukt."
                 );
 
-                setMessage(errorMessage);
+                showError(errorMessage);
                 return;
             }
 
             const text = await response.text();
-            setMessage(text || "Profiel succesvol bijgewerkt.");
+
+            setOriginalProfile({
+                fullname,
+                email,
+                phoneNumber,
+                birthDate,
+            });
+
+            showSuccess(text || "Profiel succesvol bijgewerkt.");
         } finally {
             setIsSavingProfile(false);
         }
+    }
+
+    function validateAddress(
+        address: Address,
+        addressName: string
+    ): string | null {
+        const hasAnyField =
+            address.straat.trim() ||
+            address.postcode.trim() ||
+            address.stad.trim() ||
+            address.land.trim();
+
+        if (!hasAnyField) {
+            return null;
+        }
+
+        if (!address.straat.trim()) {
+            return `${addressName}: straat is verplicht.`;
+        }
+
+        if (!address.postcode.trim()) {
+            return `${addressName}: postcode is verplicht.`;
+        }
+
+        if (!address.stad.trim()) {
+            return `${addressName}: stad is verplicht.`;
+        }
+
+        if (!address.land.trim()) {
+            return `${addressName}: land is verplicht.`;
+        }
+
+        return null;
     }
 
     async function handleSaveAddresses() {
@@ -144,58 +209,30 @@ export default function AccountPage() {
         setIsSavingAddresses(true);
 
         try {
-            const validateAddress = (
-                address: Address,
-                addressName: string
-            ): string | null => {
-                const hasAnyField =
-                    address.straat.trim() ||
-                    address.postcode.trim() ||
-                    address.stad.trim() ||
-                    address.land.trim();
+            if (editingBilling) {
+                const billingError = validateAddress(
+                    billingAdress,
+                    "Factuuradres"
+                );
 
-                if (!hasAnyField) {
-                    return null; // leeg adres is toegestaan
+                if (billingError) {
+                    showError(billingError);
+                    return;
                 }
-
-                if (!address.straat.trim()) {
-                    return `${addressName}: straat is verplicht.`;
-                }
-
-                if (!address.postcode.trim()) {
-                    return `${addressName}: postcode is verplicht.`;
-                }
-
-                if (!address.stad.trim()) {
-                    return `${addressName}: stad is verplicht.`;
-                }
-
-                if (!address.land.trim()) {
-                    return `${addressName}: land is verplicht.`;
-                }
-
-                return null;
-            };
-
-            const billingError = validateAddress(
-                billingAdress,
-                "Factuuradres"
-            );
-
-            if (billingError) {
-                setMessage(billingError);
-                return;
             }
 
-            const shippingError = validateAddress(
-                shippingAdress,
-                "Bezorgadres"
-            );
+            if (editingShipping) {
+                const shippingError = validateAddress(
+                    shippingAdress,
+                    "Bezorgadres"
+                );
 
-            if (shippingError) {
-                setMessage(shippingError);
-                return;
+                if (shippingError) {
+                    showError(shippingError);
+                    return;
+                }
             }
+
             const response = await fetch(`${API_URL}/api/Adress/save-adresses`, {
                 method: "POST",
                 headers: {
@@ -203,8 +240,8 @@ export default function AccountPage() {
                 },
                 credentials: "include",
                 body: JSON.stringify({
-                    billingAdress: billingAdress,
-                    shippingAdress: shippingAdress,
+                    billingAdress,
+                    shippingAdress,
                 }),
             });
 
@@ -214,7 +251,7 @@ export default function AccountPage() {
                     "Adressen opslaan mislukt."
                 );
 
-                setMessage(errorMessage);
+                showError(errorMessage);
                 return;
             }
 
@@ -222,11 +259,16 @@ export default function AccountPage() {
 
             setEditingBilling(false);
             setEditingShipping(false);
-            setMessage(text || "Adressen succesvol opgeslagen.");
+
+            await fetchAddress("Billing", setBillingAddress);
+            await fetchAddress("Shipping", setShippingAddress);
+
+            showSuccess(text || "Adressen succesvol opgeslagen.");
         } finally {
             setIsSavingAddresses(false);
         }
     }
+
     function handleCancelProfile() {
         setFullname(originalProfile.fullname);
         setEmail(originalProfile.email);
@@ -234,16 +276,30 @@ export default function AccountPage() {
         setBirthDate(originalProfile.birthDate);
         setMessage("");
     }
+
+    function renderMessage() {
+        if (!message) return null;
+
+        return (
+            <div
+                className={
+                    isSuccess
+                        ? styles.messageSuccess
+                        : styles.messageError
+                }
+            >
+                {message}
+            </div>
+        );
+    }
+
     function renderAddressCard(
         title: string,
         address: Address,
         isEditing: boolean,
         setIsEditing: (value: boolean) => void,
         setAddress: React.Dispatch<React.SetStateAction<Address>>
-    )
-
-
-    {
+    ) {
         const hasAddress =
             address.straat.trim() !== "" ||
             address.postcode.trim() !== "" ||
@@ -256,7 +312,20 @@ export default function AccountPage() {
                     <button
                         type="button"
                         className={styles.editButton}
-                        onClick={() => setIsEditing(!isEditing)}
+                        onClick={async () => {
+                            setMessage("");
+
+                            if (isEditing) {
+                                await fetchAddress(
+                                    title === "Factuuradres"
+                                        ? "Billing"
+                                        : "Shipping",
+                                    setAddress
+                                );
+                            }
+
+                            setIsEditing(!isEditing);
+                        }}
                         disabled={isSavingAddresses}
                     >
                         {isEditing ? "Sluiten" : hasAddress ? "Bewerken" : "Nieuw"}
@@ -289,50 +358,71 @@ export default function AccountPage() {
                     </>
                 ) : (
                     <div className={styles.addressForm}>
-                        <input
-                            placeholder="Straat"
-                            value={address.straat}
-                            disabled={isSavingAddresses}
-                            onChange={(e) =>
-                                setAddress({ ...address, straat: e.target.value })
-                            }
-                        />
+                        <div className={styles.formGroup}>
+                            <label>Straat</label>
+                            <input
+                                value={address.straat}
+                                disabled={isSavingAddresses}
+                                onChange={(e) =>
+                                    setAddress({
+                                        ...address,
+                                        straat: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
 
-                        <input
-                            placeholder="Postcode"
-                            value={address.postcode}
-                            disabled={isSavingAddresses}
-                            onChange={(e) =>
-                                setAddress({ ...address, postcode: e.target.value })
-                            }
-                        />
+                        <div className={styles.formGroup}>
+                            <label>Postcode</label>
+                            <input
+                                value={address.postcode}
+                                disabled={isSavingAddresses}
+                                onChange={(e) =>
+                                    setAddress({
+                                        ...address,
+                                        postcode: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
 
-                        <input
-                            placeholder="Stad"
-                            value={address.stad}
-                            disabled={isSavingAddresses}
-                            onChange={(e) =>
-                                setAddress({ ...address, stad: e.target.value })
-                            }
-                        />
+                        <div className={styles.formGroup}>
+                            <label>Stad</label>
+                            <input
+                                value={address.stad}
+                                disabled={isSavingAddresses}
+                                onChange={(e) =>
+                                    setAddress({
+                                        ...address,
+                                        stad: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
 
-                        <input
-                            placeholder="Land"
-                            value={address.land}
-                            disabled={isSavingAddresses}
-                            onChange={(e) =>
-                                setAddress({ ...address, land: e.target.value })
-                            }
-                        />
+                        <div className={styles.formGroup}>
+                            <label>Land</label>
+                            <input
+                                value={address.land}
+                                disabled={isSavingAddresses}
+                                onChange={(e) =>
+                                    setAddress({
+                                        ...address,
+                                        land: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                        
                     </div>
                 )}
-            </div>
-        );
-    }
+            </div>)}
 
     return (
         <main className={styles.accountPage}>
-            <button className={styles.backButton}>← Terug naar startpagina</button>
+            <button className={styles.backButton} onClick={() => navigate("/bestelpagina")}>
+                ← Terug naar startpagina
+            </button>
 
             <h1>Dashboard</h1>
             <p className={styles.subtitle}>
@@ -343,7 +433,10 @@ export default function AccountPage() {
                 <button
                     type="button"
                     className={activeTab === "personal" ? styles.activeTab : styles.tab}
-                    onClick={() => setActiveTab("personal")}
+                    onClick={() => {
+                        setMessage("");
+                        setActiveTab("personal");
+                    }}
                 >
                     Persoonlijke gegevens
                 </button>
@@ -351,7 +444,10 @@ export default function AccountPage() {
                 <button
                     type="button"
                     className={activeTab === "addresses" ? styles.activeTab : styles.tab}
-                    onClick={() => setActiveTab("addresses")}
+                    onClick={() => {
+                        setMessage("");
+                        setActiveTab("addresses");
+                    }}
                 >
                     Adressen
                 </button>
@@ -400,13 +496,14 @@ export default function AccountPage() {
                             </div>
                         </div>
 
-                        {message && <p className={styles.message}>{message}</p>}
+                        {renderMessage()}
 
                         <div className={styles.actions}>
                             <button
                                 type="button"
                                 className={styles.cancelButton}
                                 onClick={handleCancelProfile}
+                                disabled={isSavingProfile}
                             >
                                 Annuleren
                             </button>
@@ -441,7 +538,7 @@ export default function AccountPage() {
                         setShippingAddress
                     )}
 
-                    {message && <p className={styles.message}>{message}</p>}
+                    {renderMessage()}
 
                     <div className={styles.actions}>
                         <button
