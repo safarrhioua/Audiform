@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import styles from "../Css/AccountPage.module.css";
+import { getErrorMessage } from "../hooks/ApiHelper";
+import { API_URL } from "../utils/config";
+import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "../hooks/UsePageTitle";
 
 type Address = {
     straat: string;
@@ -12,28 +16,57 @@ const emptyAddress: Address = {
     straat: "",
     postcode: "",
     stad: "",
-    land: ""
+    land: "",
 };
 
 export default function AccountPage() {
+    
     const [fullname, setFullname] = useState("");
     const [email, setEmail] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
     const [birthDate, setBirthDate] = useState("");
-    const [message, setMessage] = useState("");
-    const [activeTab, setActiveTab] = useState("personal");
 
+    const [message, setMessage] = useState("");
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    const [activeTab, setActiveTab] = useState("personal");
+    usePageTitle(
+        activeTab === "personal"
+            ? "Persoonlijke gegevens"
+            : "Adressen"
+    );
     const [billingAdress, setBillingAddress] = useState<Address>(emptyAddress);
     const [shippingAdress, setShippingAddress] = useState<Address>(emptyAddress);
 
     const [editingBilling, setEditingBilling] = useState(false);
     const [editingShipping, setEditingShipping] = useState(false);
 
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [isSavingAddresses, setIsSavingAddresses] = useState(false);
+
+    const [originalProfile, setOriginalProfile] = useState({
+        fullname: "",
+        email: "",
+        phoneNumber: "",
+        birthDate: "",
+    });
+
+    const navigate = useNavigate();
+    function showError(text: string) {
+        setIsSuccess(false);
+        setMessage(text);
+    }
+
+    function showSuccess(text: string) {
+        setIsSuccess(true);
+        setMessage(text);
+    }
+
     async function fetchAddress(
         addressType: "Billing" | "Shipping",
         setAddress: React.Dispatch<React.SetStateAction<Address>>
     ) {
-        const response = await fetch(`https://localhost:7050/api/Adress/GetAdres/${addressType}`, {
+        const response = await fetch(`${API_URL}/api/Adress/GetAdres/${addressType}`, {
             method: "GET",
             credentials: "include",
         });
@@ -51,15 +84,13 @@ export default function AccountPage() {
             land: result.data.land || "",
         });
     }
+
     useEffect(() => {
         async function fetchProfile() {
-            const response = await fetch(
-                "https://localhost:7050/api/UserManagement/GetUser",
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
-            );
+            const response = await fetch(`${API_URL}/api/UserManagement/GetUser`, {
+                method: "GET",
+                credentials: "include",
+            });
 
             if (!response.ok) return;
 
@@ -69,68 +100,198 @@ export default function AccountPage() {
             setEmail(data.email || "");
             setPhoneNumber(data.phoneNumber || "");
             setBirthDate(data.dateofbirth || "");
+
+            setOriginalProfile({
+                fullname: data.fullname || "",
+                email: data.email || "",
+                phoneNumber: data.phoneNumber || "",
+                birthDate: data.dateofbirth || "",
+            });
         }
 
         fetchProfile();
-
         fetchAddress("Billing", setBillingAddress);
         fetchAddress("Shipping", setShippingAddress);
-
     }, []);
 
     async function handleSave(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setMessage("");
+        setIsSavingProfile(true);
 
-        const response = await fetch("https://localhost:7050/api/UserManagement/updateprofile", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
+        try {
+            if (!email.trim()) {
+                showError("E-mailadres mag niet leeg zijn.");
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailRegex.test(email)) {
+                showError("Vul een geldig e-mailadres in.");
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/UserManagement/updateprofile`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    fullname,
+                    email,
+                    phoneNumber,
+                    dateofbirth: birthDate,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorMessage = await getErrorMessage(
+                    response,
+                    "Profiel bijwerken mislukt."
+                );
+
+                showError(errorMessage);
+                return;
+            }
+
+            const text = await response.text();
+
+            setOriginalProfile({
                 fullname,
                 email,
                 phoneNumber,
-                dateofbirth: birthDate,
-            }),
-        });
+                birthDate,
+            });
 
-        const text = await response.text();
+            showSuccess(text || "Profiel succesvol bijgewerkt.");
+        } finally {
+            setIsSavingProfile(false);
+        }
+    }
 
-        if (!response.ok) {
-            setMessage(text || "Profiel bijwerken mislukt.");
-            return;
+    function validateAddress(
+        address: Address,
+        addressName: string
+    ): string | null {
+        const hasAnyField =
+            address.straat.trim() ||
+            address.postcode.trim() ||
+            address.stad.trim() ||
+            address.land.trim();
+
+        if (!hasAnyField) {
+            return null;
         }
 
-        setMessage(text || "Profiel succesvol bijgewerkt.");
+        if (!address.straat.trim()) {
+            return `${addressName}: straat is verplicht.`;
+        }
+
+        if (!address.postcode.trim()) {
+            return `${addressName}: postcode is verplicht.`;
+        }
+
+        if (!address.stad.trim()) {
+            return `${addressName}: stad is verplicht.`;
+        }
+
+        if (!address.land.trim()) {
+            return `${addressName}: land is verplicht.`;
+        }
+
+        return null;
     }
 
     async function handleSaveAddresses() {
         setMessage("");
+        setIsSavingAddresses(true);
 
-        const response = await fetch("https://localhost:7050/api/Adress/save-adresses", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-                billingAdress: billingAdress,
-                shippingAdress: shippingAdress
-            }),
-        });
+        try {
+            if (editingBilling) {
+                const billingError = validateAddress(
+                    billingAdress,
+                    "Factuuradres"
+                );
 
-        const text = await response.text();
+                if (billingError) {
+                    showError(billingError);
+                    return;
+                }
+            }
 
-        if (!response.ok) {
-            setMessage(text || "Adressen opslaan mislukt.");
-            return;
+            if (editingShipping) {
+                const shippingError = validateAddress(
+                    shippingAdress,
+                    "Bezorgadres"
+                );
+
+                if (shippingError) {
+                    showError(shippingError);
+                    return;
+                }
+            }
+
+            const response = await fetch(`${API_URL}/api/Adress/save-adresses`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    billingAdress,
+                    shippingAdress,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorMessage = await getErrorMessage(
+                    response,
+                    "Adressen opslaan mislukt."
+                );
+
+                showError(errorMessage);
+                return;
+            }
+
+            const text = await response.text();
+
+            setEditingBilling(false);
+            setEditingShipping(false);
+
+            await fetchAddress("Billing", setBillingAddress);
+            await fetchAddress("Shipping", setShippingAddress);
+
+            showSuccess(text || "Adressen succesvol opgeslagen.");
+        } finally {
+            setIsSavingAddresses(false);
         }
-
-        setEditingBilling(false);
-        setEditingShipping(false);
-        setMessage(text || "Adressen succesvol opgeslagen.");
-
-
     }
-   
+
+    function handleCancelProfile() {
+        setFullname(originalProfile.fullname);
+        setEmail(originalProfile.email);
+        setPhoneNumber(originalProfile.phoneNumber);
+        setBirthDate(originalProfile.birthDate);
+        setMessage("");
+    }
+
+    function renderMessage() {
+        if (!message) return null;
+
+        return (
+            <div
+                className={
+                    isSuccess
+                        ? styles.messageSuccess
+                        : styles.messageError
+                }
+            >
+                {message}
+            </div>
+        );
+    }
 
     function renderAddressCard(
         title: string,
@@ -151,12 +312,24 @@ export default function AccountPage() {
                     <button
                         type="button"
                         className={styles.editButton}
-                        onClick={() => setIsEditing(!isEditing)}
+                        onClick={async () => {
+                            setMessage("");
+
+                            if (isEditing) {
+                                await fetchAddress(
+                                    title === "Factuuradres"
+                                        ? "Billing"
+                                        : "Shipping",
+                                    setAddress
+                                );
+                            }
+
+                            setIsEditing(!isEditing);
+                        }}
+                        disabled={isSavingAddresses}
                     >
                         {isEditing ? "Sluiten" : hasAddress ? "Bewerken" : "Nieuw"}
                     </button>
-
-                    
                 </div>
 
                 <div className={styles.addressTitle}>{title}</div>
@@ -185,55 +358,85 @@ export default function AccountPage() {
                     </>
                 ) : (
                     <div className={styles.addressForm}>
-                        <input
-                            placeholder="Straat"
-                            value={address.straat}
-                            onChange={(e) =>
-                                setAddress({ ...address, straat: e.target.value })
-                            }
-                        />
+                        <div className={styles.formGroup}>
+                            <label>Straat</label>
+                            <input
+                                value={address.straat}
+                                disabled={isSavingAddresses}
+                                onChange={(e) =>
+                                    setAddress({
+                                        ...address,
+                                        straat: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
 
-                        <input
-                            placeholder="Postcode"
-                            value={address.postcode}
-                            onChange={(e) =>
-                                setAddress({ ...address, postcode: e.target.value })
-                            }
-                        />
+                        <div className={styles.formGroup}>
+                            <label>Postcode</label>
+                            <input
+                                value={address.postcode}
+                                disabled={isSavingAddresses}
+                                onChange={(e) =>
+                                    setAddress({
+                                        ...address,
+                                        postcode: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
 
-                        <input
-                            placeholder="Stad"
-                            value={address.stad}
-                            onChange={(e) =>
-                                setAddress({ ...address, stad: e.target.value })
-                            }
-                        />
+                        <div className={styles.formGroup}>
+                            <label>Stad</label>
+                            <input
+                                value={address.stad}
+                                disabled={isSavingAddresses}
+                                onChange={(e) =>
+                                    setAddress({
+                                        ...address,
+                                        stad: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
 
-                        <input
-                            placeholder="Land"
-                            value={address.land}
-                            onChange={(e) =>
-                                setAddress({ ...address, land: e.target.value })
-                            }
-                        />
+                        <div className={styles.formGroup}>
+                            <label>Land</label>
+                            <input
+                                value={address.land}
+                                disabled={isSavingAddresses}
+                                onChange={(e) =>
+                                    setAddress({
+                                        ...address,
+                                        land: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+                        
                     </div>
                 )}
-            </div>
-        );
-    }
+            </div>)}
 
     return (
         <main className={styles.accountPage}>
-            <button className={styles.backButton}>← Terug naar startpagina</button>
+            <button className={styles.backButton} onClick={() => navigate("/bestelpagina")}>
+                ← Terug naar startpagina
+            </button>
 
             <h1>Dashboard</h1>
-            <p className={styles.subtitle}>Beheer uw persoonlijke gegevens en voorkeuren</p>
+            <p className={styles.subtitle}>
+                Beheer uw persoonlijke gegevens en voorkeuren
+            </p>
 
             <div className={styles.tabs}>
                 <button
                     type="button"
                     className={activeTab === "personal" ? styles.activeTab : styles.tab}
-                    onClick={() => setActiveTab("personal")}
+                    onClick={() => {
+                        setMessage("");
+                        setActiveTab("personal");
+                    }}
                 >
                     Persoonlijke gegevens
                 </button>
@@ -241,7 +444,10 @@ export default function AccountPage() {
                 <button
                     type="button"
                     className={activeTab === "addresses" ? styles.activeTab : styles.tab}
-                    onClick={() => setActiveTab("addresses")}
+                    onClick={() => {
+                        setMessage("");
+                        setActiveTab("addresses");
+                    }}
                 >
                     Adressen
                 </button>
@@ -255,6 +461,7 @@ export default function AccountPage() {
                                 <label>Volledige naam</label>
                                 <input
                                     value={fullname}
+                                    disabled={isSavingProfile}
                                     onChange={(e) => setFullname(e.target.value)}
                                 />
                             </div>
@@ -264,6 +471,7 @@ export default function AccountPage() {
                                 <input
                                     type="email"
                                     value={email}
+                                    disabled={isSavingProfile}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
@@ -272,6 +480,7 @@ export default function AccountPage() {
                                 <label>Telefoonnummer</label>
                                 <input
                                     value={phoneNumber}
+                                    disabled={isSavingProfile}
                                     onChange={(e) => setPhoneNumber(e.target.value)}
                                 />
                             </div>
@@ -281,20 +490,30 @@ export default function AccountPage() {
                                 <input
                                     type="date"
                                     value={birthDate}
+                                    disabled={isSavingProfile}
                                     onChange={(e) => setBirthDate(e.target.value)}
                                 />
                             </div>
                         </div>
 
-                        {message && <p className={styles.message}>{message}</p>}
+                        {renderMessage()}
 
                         <div className={styles.actions}>
-                            <button type="button" className={styles.cancelButton}>
+                            <button
+                                type="button"
+                                className={styles.cancelButton}
+                                onClick={handleCancelProfile}
+                                disabled={isSavingProfile}
+                            >
                                 Annuleren
                             </button>
 
-                            <button type="submit" className={styles.saveButton}>
-                                Opslaan
+                            <button
+                                type="submit"
+                                className={styles.saveButton}
+                                disabled={isSavingProfile}
+                            >
+                                {isSavingProfile ? "Opslaan..." : "Opslaan"}
                             </button>
                         </div>
                     </form>
@@ -319,15 +538,16 @@ export default function AccountPage() {
                         setShippingAddress
                     )}
 
-                    {message && <p className={styles.message}>{message}</p>}
+                    {renderMessage()}
 
                     <div className={styles.actions}>
                         <button
                             type="button"
                             className={styles.saveButton}
                             onClick={handleSaveAddresses}
+                            disabled={isSavingAddresses}
                         >
-                            Adressen opslaan
+                            {isSavingAddresses ? "Opslaan..." : "Adressen opslaan"}
                         </button>
                     </div>
                 </section>

@@ -10,5 +10,6 @@ namespace Application.Interfaces
         Task SendAccountCreatedEmailAsync(string ToEmail, string loginlink);
         Task SendResendConfirmationEmailAsync(string ToEmail, string confirmationLink);
         Task SendAdminEmailConfirmationAsync(string UserEmail, string fullname, string requestedRole);
+        Task SendPasswordResetEmailAsync(string toEmail, string resetLink);
     }
 }

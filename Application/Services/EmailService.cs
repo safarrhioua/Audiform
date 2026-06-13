@@ -11,7 +11,9 @@ using Domain.Entities;
 
 namespace Application.Services
 {
+
     public class EmailService : IConfirmationService
+
     {
 
         private readonly IConfiguration _config;
@@ -132,6 +134,47 @@ namespace Application.Services
 
             await SendEmailAsync(adminemail!, "Nieuwe gebruikersregistratie", htmlcontent, true);
 
+        }
+
+        public async Task SendPasswordResetEmailAsync(string toEmail, string resetLink)
+        {
+            string htmlContent = $@"
+        <html>
+            <body style='font-family: Arial, sans-serif; background-color: #f4f6f8; margin:0; padding:20px;'>
+                <div style='max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:8px;'>
+                    <h2 style='color:#333;'>Wachtwoord opnieuw instellen</h2>
+
+                    <p style='font-size:16px; color:#555;'>
+                        U heeft een verzoek gedaan om uw wachtwoord opnieuw in te stellen.
+                    </p>
+
+                    <p style='font-size:16px; color:#555;'>
+                        Klik op onderstaande knop om een nieuw wachtwoord aan te maken.
+                    </p>
+
+                    <p style='text-align:center;'>
+                        <a href='{resetLink}' 
+                           style='background:#0d6efd; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;'>
+                            Wachtwoord resetten
+                        </a>
+                    </p>
+
+                    <p style='font-size:14px; color:#777;'>
+                        Heeft u dit verzoek niet gedaan? Dan kunt u deze e-mail negeren.
+                    </p>
+
+                    <p style='font-size:12px; color:#999; margin-top:30px;'>
+                        &copy; {DateTime.UtcNow.Year} Audiform.
+                    </p>
+                </div>
+            </body>
+        </html>";
+
+            await SendEmailAsync(
+                toEmail,
+                "Wachtwoord opnieuw instellen",
+                htmlContent,
+                true);
         }
     }
 }

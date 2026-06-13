@@ -14,6 +14,6 @@ namespace Domain.Entities
         public string UserId { get; set; } = string.Empty;
         public string AdresType { get; set; } = string.Empty;
 
-        public ApplicationUser ApplicationUser { get; set; } = null!;
+        //public ApplicationUser ApplicationUser { get; set; } = null!;
     }
 }
