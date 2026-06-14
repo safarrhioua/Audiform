@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import {
+    Alert,
     Box,
     Button,
     FormControlLabel,
@@ -10,8 +12,16 @@ import {
     Typography,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import CreatedOrderEarSummaryCard from '../components/orders/CreatedOrderEarSummaryCard';
+import EarSummaryCard from '../components/orders/EarSummaryCard';
+import { useCreateEarpieceOrder } from '../hooks/useCreateEarpieceOrder';
 import type { EarSelections } from '../types/EarSelections';
 import type { EarpieceTemplate } from '../types/EarpieceTemplate';
+import { formatSendMethod } from '../utils/orderFormatters';
+
+const MAX_FILES = 4;
+const MAX_FILE_SIZE_IN_BYTES = 10 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'application/pdf'];
 
 interface BestellingAfrondenLocationState {
     template?: EarpieceTemplate;
@@ -19,59 +29,6 @@ interface BestellingAfrondenLocationState {
     leftTemplateId?: number;
     rightSelections?: EarSelections;
     leftSelections?: EarSelections;
-}
-
-function getSelectionRows(selections: EarSelections) {
-    return Object.values(selections).flatMap((stepSelections) =>
-        stepSelections.map((selection) => ({
-            label: selection.stepName,
-            value: selection.valueText || selection.optionName || '-',
-        })),
-    );
-}
-
-function EarSummaryCard({
-    title,
-    color,
-    selections,
-}: {
-    title: string;
-    color: string;
-    selections: EarSelections;
-}) {
-    const rows = getSelectionRows(selections);
-
-    return (
-        <Paper
-            sx={{
-                p: 2,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: color,
-                boxShadow: 'none',
-            }}
-        >
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color, mb: 1.5 }}>
-                {title}
-            </Typography>
-            {rows.length > 0 ? (
-                rows.map((row) => (
-                    <Box key={`${row.label}-${row.value}`} sx={{ mb: 1 }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {row.label}
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {row.value}
-                        </Typography>
-                    </Box>
-                ))
-            ) : (
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Geen configuratie gekozen.
-                </Typography>
-            )}
-        </Paper>
-    );
 }
 
 export default function BestellingAfronden() {
@@ -85,7 +42,39 @@ export default function BestellingAfronden() {
         leftSelections = {},
     } =
         (location.state ?? {}) as BestellingAfrondenLocationState;
+    const [patientName, setPatientName] = useState('');
+    const [patientNumber, setPatientNumber] = useState('');
+    const [deliveryDate, setDeliveryDate] = useState('');
+    const [remarks, setRemarks] = useState('');
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [fileUploadError, setFileUploadError] = useState('');
     const [sendMethod, setSendMethod] = useState('physical');
+    const {
+        createdOrder,
+        submitError,
+        submitSuccess,
+        isSubmitting,
+        handleCompleteOrder,
+    } = useCreateEarpieceOrder({
+        patientName,
+        patientNumber,
+        deliveryDate,
+        remarks,
+        selectedFiles,
+        sendMethod,
+        rightSelections,
+        leftSelections,
+    });
+    const hasOrderConfiguration =
+        Boolean(rightTemplateId || leftTemplateId) ||
+        Object.keys(rightSelections).length > 0 ||
+        Object.keys(leftSelections).length > 0;
+
+    useEffect(() => {
+        if (!hasOrderConfiguration) {
+            navigate('/configuratie', { replace: true });
+        }
+    }, [hasOrderConfiguration, navigate]);
 
     const orderDate = useMemo(
         () =>
@@ -97,15 +86,65 @@ export default function BestellingAfronden() {
         [],
     );
 
-    function handleCompleteOrder() {
-        console.log('Bestelling afronden', {
-            template,
-            rightTemplateId,
-            leftTemplateId,
-            rightSelections,
-            leftSelections,
-            sendMethod,
+    function handleFilesChange(event: ChangeEvent<HTMLInputElement>) {
+        const files = event.currentTarget.files
+            ? Array.from(event.currentTarget.files)
+            : [];
+        const errors: string[] = [];
+
+        if (files.length === 0) {
+            event.currentTarget.value = '';
+            return;
+        }
+
+        const filesWithAllowedTypes = files.filter((file) => {
+            if (ALLOWED_FILE_TYPES.includes(file.type)) {
+                return true;
+            }
+
+            errors.push(`${file.name} heeft geen toegestaan bestandstype.`);
+            return false;
         });
+
+        const filesWithAllowedSizes = filesWithAllowedTypes.filter((file) => {
+            if (file.size <= MAX_FILE_SIZE_IN_BYTES) {
+                return true;
+            }
+
+            errors.push(`${file.name} is groter dan 10MB.`);
+            return false;
+        });
+
+        const availableSlots = MAX_FILES - selectedFiles.length;
+        const filesToAdd = filesWithAllowedSizes.slice(0, Math.max(availableSlots, 0));
+
+        if (filesWithAllowedSizes.length > availableSlots) {
+            errors.push(`U kunt maximaal ${MAX_FILES} bestanden toevoegen.`);
+        }
+
+        if (filesToAdd.length > 0) {
+            setSelectedFiles((currentFiles) => [...currentFiles, ...filesToAdd]);
+        }
+
+        setFileUploadError(errors.join(' '));
+
+        event.currentTarget.value = '';
+    }
+
+    function handleRemoveSelectedFile(fileIndex: number) {
+        setSelectedFiles((currentFiles) =>
+            currentFiles.filter((_, index) => index !== fileIndex),
+        );
+        setFileUploadError('');
+    }
+
+    function handleSendMethodChange(newSendMethod: string) {
+        setSendMethod(newSendMethod);
+
+        if (newSendMethod === 'physical') {
+            setSelectedFiles([]);
+            setFileUploadError('');
+        }
     }
 
     function handleEditConfiguration() {
@@ -149,6 +188,18 @@ export default function BestellingAfronden() {
                 Controleer uw configuratie en vul de aanvullende gegevens in
             </Typography>
 
+            {submitError ? (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                    {submitError}
+                </Alert>
+            ) : null}
+
+            {submitSuccess ? (
+                <Alert severity="success" sx={{ mb: 3 }}>
+                    {submitSuccess}
+                </Alert>
+            ) : null}
+
             <Box
                 sx={{
                     display: 'grid',
@@ -182,7 +233,7 @@ export default function BestellingAfronden() {
                                     Order nummer
                                 </Typography>
                                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                    Wordt aangemaakt bij afronden
+                                    {createdOrder?.shopOrderId ?? 'Wordt aangemaakt bij afronden'}
                                 </Typography>
                             </Box>
                             <Box>
@@ -203,22 +254,80 @@ export default function BestellingAfronden() {
                             </Box>
                         </Box>
                         <Box sx={{ display: 'grid', gap: 1.5 }}>
-                            <TextField fullWidth size="small" label="Referentie *" />
-                            <TextField
-                                fullWidth
-                                size="small"
-                                label="Gewenste leverdatum *"
-                                type="date"
-                                slotProps={{ inputLabel: { shrink: true } }}
-                            />
-                            <TextField
-                                fullWidth
-                                size="small"
-                                label="Opmerkingen"
-                                multiline
-                                minRows={3}
-                                placeholder="Eventuele opmerkingen..."
-                            />
+                            {createdOrder ? (
+                                <>
+                                    <Box>
+                                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                            Patiëntnaam
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                            {createdOrder.patientName}
+                                        </Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                            Referentie
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                            {createdOrder.patientNumber}
+                                        </Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                            Gewenste leverdatum
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                            {new Intl.DateTimeFormat('nl-NL').format(
+                                                new Date(createdOrder.deliveryDate),
+                                            )}
+                                        </Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                            Opmerkingen
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                            {createdOrder.remarks || '-'}
+                                        </Typography>
+                                    </Box>
+                                </>
+                            ) : (
+                                <>
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        label="Patiëntnaam *"
+                                        value={patientName}
+                                        onChange={(event) => setPatientName(event.target.value)}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        label="Referentie *"
+                                        value={patientNumber}
+                                        onChange={(event) => setPatientNumber(event.target.value)}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        label="Gewenste leverdatum *"
+                                        type="date"
+                                        value={deliveryDate}
+                                        onChange={(event) => setDeliveryDate(event.target.value)}
+                                        slotProps={{ inputLabel: { shrink: true } }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        label="Opmerkingen"
+                                        multiline
+                                        minRows={3}
+                                        value={remarks}
+                                        onChange={(event) => setRemarks(event.target.value)}
+                                        placeholder="Eventuele opmerkingen..."
+                                    />
+                                </>
+                            )}
                         </Box>
                     </Paper>
 
@@ -237,39 +346,117 @@ export default function BestellingAfronden() {
                         >
                             Afdrukken versturen
                         </Typography>
-                        <RadioGroup
-                            value={sendMethod}
-                            onChange={(event) => setSendMethod(event.target.value)}
-                            sx={{ mb: 2 }}
-                        >
-                            <FormControlLabel
-                                value="physical"
-                                control={<Radio size="small" />}
-                                label="Fysiek versturen"
-                            />
-                            <FormControlLabel
-                                value="digital"
-                                control={<Radio size="small" />}
-                                label="Digitaal versturen"
-                            />
-                        </RadioGroup>
-                        <Box
-                            sx={{
-                                border: '1px dashed',
-                                borderColor: 'divider',
-                                borderRadius: 2,
-                                p: 4,
-                                textAlign: 'center',
-                                bgcolor: 'grey.50',
-                            }}
-                        >
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                Klik om bestanden te uploaden
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                PNG, JPG, PDF tot 10MB
-                            </Typography>
-                        </Box>
+                        {createdOrder ? (
+                            <>
+                                <Typography variant="body2" sx={{ fontWeight: 700, mb: 2 }}>
+                                    {formatSendMethod(createdOrder.sendMethod)}
+                                </Typography>
+                                {createdOrder.uploadedFileNames.length > 0 ? (
+                                    <Box>
+                                        {createdOrder.uploadedFileNames.map((fileName) => (
+                                            <Typography
+                                                key={fileName}
+                                                variant="body2"
+                                                sx={{ color: 'text.secondary' }}
+                                            >
+                                                {fileName}
+                                            </Typography>
+                                        ))}
+                                    </Box>
+                                ) : (
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                        Geen bestanden geüpload.
+                                    </Typography>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <RadioGroup
+                                    value={sendMethod}
+                                    onChange={(event) => handleSendMethodChange(event.target.value)}
+                                    sx={{ mb: 2 }}
+                                >
+                                    <FormControlLabel
+                                        value="physical"
+                                        control={<Radio size="small" />}
+                                        label="Fysiek versturen"
+                                    />
+                                    <FormControlLabel
+                                        value="digital"
+                                        control={<Radio size="small" />}
+                                        label="Digitaal versturen"
+                                    />
+                                </RadioGroup>
+                                {sendMethod === 'digital' ? (
+                                    <Box
+                                        component="label"
+                                        sx={{
+                                            border: '1px dashed',
+                                            borderColor: 'divider',
+                                            borderRadius: 2,
+                                            p: 4,
+                                            textAlign: 'center',
+                                            bgcolor: 'grey.50',
+                                            cursor: 'pointer',
+                                            display: 'block',
+                                        }}
+                                    >
+                                        <input
+                                            hidden
+                                            multiple
+                                            type="file"
+                                            accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf"
+                                            onChange={handleFilesChange}
+                                        />
+                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                            Klik om bestanden te uploaden
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                            PNG, JPG, JPEG of PDF. Maximaal 4 bestanden, maximaal 10MB per bestand.
+                                        </Typography>
+                                    </Box>
+                                ) : null}
+                            </>
+                        )}
+                        {!createdOrder && sendMethod === 'digital' && fileUploadError ? (
+                            <Alert severity="error" sx={{ mt: 2 }}>
+                                {fileUploadError}
+                            </Alert>
+                        ) : null}
+                        {!createdOrder && sendMethod === 'digital' && selectedFiles.length > 0 ? (
+                            <Box sx={{ mt: 2, display: 'grid', gap: 1 }}>
+                                {selectedFiles.map((file, index) => (
+                                    <Box
+                                        key={`${file.name}-${file.lastModified}`}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: 2,
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                color: 'text.secondary',
+                                                minWidth: 0,
+                                                overflowWrap: 'anywhere',
+                                            }}
+                                        >
+                                            {file.name}
+                                        </Typography>
+                                        <Button
+                                            size="small"
+                                            variant="text"
+                                            onClick={() => handleRemoveSelectedFile(index)}
+                                            sx={{ flexShrink: 0, textTransform: 'none' }}
+                                        >
+                                            Verwijderen
+                                        </Button>
+                                    </Box>
+                                ))}
+                            </Box>
+                        ) : null}
                     </Paper>
                 </Box>
 
@@ -297,26 +484,53 @@ export default function BestellingAfronden() {
                         </Typography>
                     </Paper>
 
-                    <EarSummaryCard
-                        title="Rechter oor"
-                        color="secondary.main"
-                        selections={rightSelections}
-                    />
-                    <EarSummaryCard
-                        title="Linker oor"
-                        color="primary.main"
-                        selections={leftSelections}
-                    />
+                    {createdOrder ? (
+                        <>
+                            <CreatedOrderEarSummaryCard
+                                title="Rechter oor"
+                                color="secondary.main"
+                                selections={createdOrder.selections}
+                                earSide="right"
+                            />
+                            <CreatedOrderEarSummaryCard
+                                title="Linker oor"
+                                color="primary.main"
+                                selections={createdOrder.selections}
+                                earSide="left"
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <EarSummaryCard
+                                title="Rechter oor"
+                                color="secondary.main"
+                                selections={rightSelections}
+                            />
+                            <EarSummaryCard
+                                title="Linker oor"
+                                color="primary.main"
+                                selections={leftSelections}
+                            />
+                        </>
+                    )}
                 </Box>
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-                <Button variant="outlined" onClick={handleEditConfiguration}>
-                    Wijzig configuratie
-                </Button>
-                <Button variant="contained" onClick={handleCompleteOrder}>
-                    Afronden
-                </Button>
+                {!createdOrder ? (
+                    <>
+                        <Button variant="outlined" onClick={handleEditConfiguration}>
+                            Wijzig configuratie
+                        </Button>
+                        <Button variant="contained" onClick={handleCompleteOrder} disabled={isSubmitting}>
+                            {isSubmitting ? 'Bezig met afronden...' : 'Afronden'}
+                        </Button>
+                    </>
+                ) : (
+                        <Button variant="contained" onClick={() => navigate('/configuratie')}>
+                        Nieuwe bestelling maken
+                    </Button>
+                )}
             </Box>
         </Box>
     );

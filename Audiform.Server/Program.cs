@@ -44,7 +44,9 @@ builder.Services.AddScoped<IAdressRepo, AdressRepository>();
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = ".AspNetCore.Identity.Application";
-    options.LoginPath = "/dev-login";
+    // /dev-login wordt niet meer gebruikt.
+    // API requests krijgen hieronder 401 terug in plaats van een redirect.
+    options.LoginPath = "/login";
 
     options.Events.OnRedirectToLogin = context =>
     {
@@ -69,6 +71,13 @@ builder.Services.ConfigureApplicationCookie(options =>
         context.Response.Redirect(context.RedirectUri);
         return Task.CompletedTask;
     };
+
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+
+    options.SlidingExpiration = true;
+    options.ExpireTimeSpan = TimeSpan.FromHours(2);
 });
 
 // CORS voor React frontend
@@ -107,8 +116,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseDefaultFiles();
-app.MapStaticAssets();
+//app.UseDefaultFiles();
+//app.MapStaticAssets();
 
 if (app.Environment.IsDevelopment())
 {
@@ -127,6 +136,6 @@ app.UseAuthorization();
 
 app.MapControllers().RequireCors("ReactDevClient");
 
-app.MapFallbackToFile("/index.html");
+//app.MapFallbackToFile("/index.html");
 
 app.Run();

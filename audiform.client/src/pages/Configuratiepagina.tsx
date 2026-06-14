@@ -1,19 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Paper } from '@mui/material';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import EarConfigurationCard from '../components/configuratie/EarConfigurationCard';
 import ProductDetails from '../components/configuratie/ProductDetails';
 import ProductImage from '../components/configuratie/ProductImage';
-import type { EarSelections, SelectedOption } from '../types/EarSelections';
+import { useEarConfigurationSelections } from '../hooks/useEarConfigurationSelections';
+import { useTemplateConfiguration } from '../hooks/useTemplateConfiguration';
+import { useTemplates } from '../hooks/useTemplates';
+import type { EarSelections } from '../types/EarSelections';
 import type { EarpieceTemplate } from '../types/EarpieceTemplate';
-import type {
-    EarpieceTemplateConfiguration,
-    TemplateOption,
-    TemplateStep,
-} from '../types/EarpieceTemplateConfiguration';
+import { getMissingRequiredStepIds } from '../utils/requiredStepValidationUtils';
+import { getVisibleConfiguration } from '../utils/visibleConfigurationUtils';
 
-const API_BASE_URL = 'https://localhost:7050';
-const TEMPLATES_ENDPOINT = `${API_BASE_URL}/api/earpiece-templates`;
+type EarSide = 'right' | 'left';
 
 interface ConfiguratieLocationState {
     template?: EarpieceTemplate;
@@ -39,225 +38,123 @@ export default function Configuratiepagina() {
         'leftTemplateId',
     );
 
-    const [templates, setTemplates] = useState<EarpieceTemplate[]>(template ? [template] : []);
-    const [templatesLoading, setTemplatesLoading] = useState(true);
-    const [templatesError, setTemplatesError] = useState<string | null>(null);
+    const { templates, templatesLoading, templatesError } = useTemplates(
+        template ? [template] : [],
+    );
     const [rightTemplateId, setRightTemplateId] = useState<number | undefined>(
         hasRightTemplateState ? locationState.rightTemplateId : initialTemplateId,
     );
     const [leftTemplateId, setLeftTemplateId] = useState<number | undefined>(
         hasLeftTemplateState ? locationState.leftTemplateId : initialTemplateId,
     );
-    const [rightConfiguration, setRightConfiguration] =
-        useState<EarpieceTemplateConfiguration | null>(null);
-    const [leftConfiguration, setLeftConfiguration] =
-        useState<EarpieceTemplateConfiguration | null>(null);
-    const [rightConfigurationLoading, setRightConfigurationLoading] = useState(false);
-    const [leftConfigurationLoading, setLeftConfigurationLoading] = useState(false);
-    const [rightConfigurationError, setRightConfigurationError] = useState<string | null>(null);
-    const [leftConfigurationError, setLeftConfigurationError] = useState<string | null>(null);
-    const [rightSelections, setRightSelections] = useState<EarSelections>(
+    const {
+        rightSelections,
+        leftSelections,
+        setRightSelections,
+        setLeftSelections,
+        handleSingleSelectionChange,
+        handleMultiSelectionToggle,
+        handleTextSelectionChange,
+    } = useEarConfigurationSelections(
         locationState.rightSelections ?? {},
-    );
-    const [leftSelections, setLeftSelections] = useState<EarSelections>(
         locationState.leftSelections ?? {},
     );
     const [validationAttempted, setValidationAttempted] = useState(false);
 
-    function getOptionId(option: TemplateOption) {
-        return option.id ?? option.optionId;
+    const rightConfiguration = useTemplateConfiguration(rightTemplateId, 'rechts');
+    const leftConfiguration = useTemplateConfiguration(leftTemplateId, 'links');
+
+    const selectedRightTemplate = useMemo(
+        () => templates.find((availableTemplate) => availableTemplate.id === rightTemplateId),
+        [rightTemplateId, templates],
+    );
+
+    const selectedLeftTemplate = useMemo(
+        () => templates.find((availableTemplate) => availableTemplate.id === leftTemplateId),
+        [leftTemplateId, templates],
+    );
+
+    const displayedTemplate = useMemo(
+        () => selectedRightTemplate ?? selectedLeftTemplate ?? template,
+        [selectedLeftTemplate, selectedRightTemplate, template],
+    );
+
+    const visibleRightConfiguration = useMemo(
+        () => getVisibleConfiguration(rightConfiguration.configuration, rightSelections),
+        [rightConfiguration.configuration, rightSelections],
+    );
+
+    const visibleLeftConfiguration = useMemo(
+        () => getVisibleConfiguration(leftConfiguration.configuration, leftSelections),
+        [leftConfiguration.configuration, leftSelections],
+    );
+
+    const missingRightRequiredStepIds = useMemo(
+        () => getMissingRequiredStepIds(visibleRightConfiguration, rightSelections),
+        [rightSelections, visibleRightConfiguration],
+    );
+
+    const missingLeftRequiredStepIds = useMemo(
+        () => getMissingRequiredStepIds(visibleLeftConfiguration, leftSelections),
+        [leftSelections, visibleLeftConfiguration],
+    );
+
+    const hasMissingRequiredSteps =
+        missingRightRequiredStepIds.length > 0 || missingLeftRequiredStepIds.length > 0;
+    const hasSelectedTemplate = Boolean(rightTemplateId || leftTemplateId);
+
+    function getEarSideTemplateId(side: EarSide) {
+        return side === 'right' ? rightTemplateId : leftTemplateId;
     }
 
-    function getOptionName(option: TemplateOption) {
-        return option.name ?? option.label ?? option.value ?? null;
+    function getEarSideSelections(side: EarSide) {
+        return side === 'right' ? rightSelections : leftSelections;
     }
 
-    function matchesVisibleWhenAny(
-        item: TemplateStep | TemplateOption,
-        selections: EarSelections,
-    ) {
-        if (!item.visibleWhenAny || item.visibleWhenAny.length === 0) {
-            return true;
-        }
+    function hasCopyableData(side: EarSide) {
+        return Boolean(getEarSideTemplateId(side));
+    }
 
-        return item.visibleWhenAny.some((route) =>
-            route.every((condition) => {
-                const selectedStepOptions = selections[condition.stepId] ?? [];
-
-                return selectedStepOptions.some(
-                    (selectedOption) => selectedOption.optionId === condition.optionId,
-                );
-            }),
+    function hasEarSideInput(side: EarSide) {
+        return (
+            Boolean(getEarSideTemplateId(side)) ||
+            Object.keys(getEarSideSelections(side)).length > 0
         );
     }
 
-    function getVisibleConfiguration(
-        configuration: EarpieceTemplateConfiguration | null,
-        selections: EarSelections,
-    ) {
-        if (!configuration) {
-            return null;
-        }
-
-        return {
-            ...configuration,
-            config: {
-                ...configuration.config,
-                steps: (configuration.config.steps ?? [])
-                    .filter((step) => matchesVisibleWhenAny(step, selections))
-                    .map((step) => {
-                        if (!step.options) {
-                            return step;
-                        }
-
-                        return {
-                            ...step,
-                            options: step.options.filter((option) =>
-                                matchesVisibleWhenAny(option, selections),
-                            ),
-                        };
-                    }),
-            },
-        };
-    }
-
-    function isRequiredStepFilled(step: TemplateStep, selections: EarSelections) {
-        const stepSelections = selections[step.stepId] ?? [];
-
-        if (step.type === 'single') {
-            return stepSelections.some((selection) => selection.optionId !== null);
-        }
-
-        if (step.type === 'multi') {
-            const minimumSelections = step.minSelections > 0 ? step.minSelections : 1;
-
-            return stepSelections.length >= minimumSelections;
-        }
-
-        if (step.type === 'text') {
-            return stepSelections.some((selection) => selection.valueText?.trim());
-        }
-
-        return true;
-    }
-
-    function getMissingRequiredStepIds(
-        configuration: EarpieceTemplateConfiguration | null,
-        selections: EarSelections,
-    ) {
-        return (configuration?.config.steps ?? [])
-            .filter((step) => step.required && !isRequiredStepFilled(step, selections))
-            .map((step) => step.stepId);
-    }
-
-    function updateSelections(
-        earSide: 'right' | 'left',
-        updater: (currentSelections: EarSelections) => EarSelections,
-    ) {
-        if (earSide === 'right') {
-            setRightSelections(updater);
+    function copyEarSideSelection(fromSide: EarSide, toSide: EarSide) {
+        if (!hasCopyableData(fromSide)) {
             return;
         }
 
-        setLeftSelections(updater);
-    }
+        const toSideLabel = toSide === 'right' ? 'Rechts' : 'Links';
 
-    function handleSingleSelectionChange(
-        earSide: 'right' | 'left',
-        step: TemplateStep,
-        optionId: number | null,
-    ) {
-        if (optionId === null) {
-            updateSelections(earSide, (currentSelections) => {
-                const nextSelections = { ...currentSelections };
-                delete nextSelections[step.stepId];
-                return nextSelections;
-            });
+        if (
+            hasEarSideInput(toSide) &&
+            !window.confirm(
+                `${toSideLabel} is al ingevuld. Wil je de bestaande keuzes overschrijven?`,
+            )
+        ) {
             return;
         }
 
-        const option = step.options?.find((availableOption) => getOptionId(availableOption) === optionId);
+        const fromTemplateId = getEarSideTemplateId(fromSide);
+        const fromSelections = getEarSideSelections(fromSide);
+        const copiedSelections = Object.fromEntries(
+            Object.entries(fromSelections).map(([stepId, selections]) => [
+                stepId,
+                selections.map((selection) => ({ ...selection })),
+            ]),
+        );
 
-        if (!option) {
+        if (toSide === 'right') {
+            setRightTemplateId(fromTemplateId);
+            setRightSelections(copiedSelections);
             return;
         }
 
-        const selectedOption: SelectedOption = {
-            stepId: step.stepId,
-            stepName: step.name,
-            optionId,
-            optionName: getOptionName(option),
-            valueText: null,
-        };
-
-        updateSelections(earSide, (currentSelections) => ({
-            ...currentSelections,
-            [step.stepId]: [selectedOption],
-        }));
-    }
-
-    function handleMultiSelectionToggle(
-        earSide: 'right' | 'left',
-        step: TemplateStep,
-        option: TemplateOption,
-    ) {
-        const optionId = getOptionId(option);
-
-        if (optionId === undefined) {
-            return;
-        }
-
-        updateSelections(earSide, (currentSelections) => {
-            const currentStepSelections = currentSelections[step.stepId] ?? [];
-            const isSelected = currentStepSelections.some(
-                (selection) => selection.optionId === optionId,
-            );
-
-            if (isSelected) {
-                return {
-                    ...currentSelections,
-                    [step.stepId]: currentStepSelections.filter(
-                        (selection) => selection.optionId !== optionId,
-                    ),
-                };
-            }
-
-            if (step.maxSelections > 0 && currentStepSelections.length >= step.maxSelections) {
-                return currentSelections;
-            }
-
-            const selectedOption: SelectedOption = {
-                stepId: step.stepId,
-                stepName: step.name,
-                optionId,
-                optionName: getOptionName(option),
-                valueText: null,
-            };
-
-            return {
-                ...currentSelections,
-                [step.stepId]: [...currentStepSelections, selectedOption],
-            };
-        });
-    }
-
-    function handleTextSelectionChange(
-        earSide: 'right' | 'left',
-        step: TemplateStep,
-        value: string,
-    ) {
-        updateSelections(earSide, (currentSelections) => ({
-            ...currentSelections,
-            [step.stepId]: [
-                {
-                    stepId: step.stepId,
-                    stepName: step.name,
-                    optionId: null,
-                    optionName: null,
-                    valueText: value,
-                },
-            ],
-        }));
+        setLeftTemplateId(fromTemplateId);
+        setLeftSelections(copiedSelections);
     }
 
     function handleContinueToOrder() {
@@ -277,195 +174,6 @@ export default function Configuratiepagina() {
             },
         });
     }
-
-    useEffect(() => {
-        let isMounted = true;
-
-        async function fetchTemplates() {
-            try {
-                setTemplatesLoading(true);
-                setTemplatesError(null);
-
-                const response = await fetch(TEMPLATES_ENDPOINT, {
-                    credentials: 'include',
-                });
-
-                if (!response.ok) {
-                    throw new Error('De producten konden niet worden opgehaald.');
-                }
-
-                const data: unknown = await response.json();
-
-                if (!Array.isArray(data)) {
-                    throw new Error('De producten konden niet worden verwerkt.');
-                }
-
-                if (isMounted) {
-                    setTemplates(data as EarpieceTemplate[]);
-                }
-            } catch (fetchError) {
-                if (isMounted) {
-                    setTemplatesError(
-                        fetchError instanceof Error
-                            ? fetchError.message
-                            : 'Er ging iets mis bij het ophalen van de producten.',
-                    );
-                }
-            } finally {
-                if (isMounted) {
-                    setTemplatesLoading(false);
-                }
-            }
-        }
-
-        void fetchTemplates();
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!rightTemplateId) {
-            setRightConfiguration(null);
-            setRightConfigurationError(null);
-            setRightConfigurationLoading(false);
-            return;
-        }
-
-        let isMounted = true;
-
-        async function fetchRightConfiguration() {
-            try {
-                setRightConfigurationLoading(true);
-                setRightConfigurationError(null);
-
-                const response = await fetch(
-                    `${TEMPLATES_ENDPOINT}/${rightTemplateId}/configuration`,
-                    { credentials: 'include' },
-                );
-
-                if (!response.ok) {
-                    throw new Error('De configuratie voor rechts kon niet worden opgehaald.');
-                }
-
-                const data = (await response.json()) as EarpieceTemplateConfiguration;
-
-                if (isMounted) {
-                    setRightConfiguration(data);
-                }
-            } catch (fetchError) {
-                if (isMounted) {
-                    setRightConfiguration(null);
-                    setRightConfigurationError(
-                        fetchError instanceof Error
-                            ? fetchError.message
-                            : 'Er ging iets mis bij het ophalen van de configuratie voor rechts.',
-                    );
-                }
-            } finally {
-                if (isMounted) {
-                    setRightConfigurationLoading(false);
-                }
-            }
-        }
-
-        void fetchRightConfiguration();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [rightTemplateId]);
-
-    useEffect(() => {
-        if (!leftTemplateId) {
-            setLeftConfiguration(null);
-            setLeftConfigurationError(null);
-            setLeftConfigurationLoading(false);
-            return;
-        }
-
-        let isMounted = true;
-
-        async function fetchLeftConfiguration() {
-            try {
-                setLeftConfigurationLoading(true);
-                setLeftConfigurationError(null);
-
-                const response = await fetch(
-                    `${TEMPLATES_ENDPOINT}/${leftTemplateId}/configuration`,
-                    { credentials: 'include' },
-                );
-
-                if (!response.ok) {
-                    throw new Error('De configuratie voor links kon niet worden opgehaald.');
-                }
-
-                const data = (await response.json()) as EarpieceTemplateConfiguration;
-
-                if (isMounted) {
-                    setLeftConfiguration(data);
-                }
-            } catch (fetchError) {
-                if (isMounted) {
-                    setLeftConfiguration(null);
-                    setLeftConfigurationError(
-                        fetchError instanceof Error
-                            ? fetchError.message
-                            : 'Er ging iets mis bij het ophalen van de configuratie voor links.',
-                    );
-                }
-            } finally {
-                if (isMounted) {
-                    setLeftConfigurationLoading(false);
-                }
-            }
-        }
-
-        void fetchLeftConfiguration();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [leftTemplateId]);
-
-    const selectedRightTemplate = useMemo(
-        () => templates.find((availableTemplate) => availableTemplate.id === rightTemplateId),
-        [rightTemplateId, templates],
-    );
-
-    const selectedLeftTemplate = useMemo(
-        () => templates.find((availableTemplate) => availableTemplate.id === leftTemplateId),
-        [leftTemplateId, templates],
-    );
-
-    const displayedTemplate = useMemo(
-        () => selectedRightTemplate ?? selectedLeftTemplate ?? template,
-        [selectedLeftTemplate, selectedRightTemplate, template],
-    );
-
-    const visibleRightConfiguration = useMemo(
-        () => getVisibleConfiguration(rightConfiguration, rightSelections),
-        [rightConfiguration, rightSelections],
-    );
-
-    const visibleLeftConfiguration = useMemo(
-        () => getVisibleConfiguration(leftConfiguration, leftSelections),
-        [leftConfiguration, leftSelections],
-    );
-
-    const missingRightRequiredStepIds = useMemo(
-        () => getMissingRequiredStepIds(visibleRightConfiguration, rightSelections),
-        [rightSelections, visibleRightConfiguration],
-    );
-
-    const missingLeftRequiredStepIds = useMemo(
-        () => getMissingRequiredStepIds(visibleLeftConfiguration, leftSelections),
-        [leftSelections, visibleLeftConfiguration],
-    );
-
-    const hasMissingRequiredSteps =
-        missingRightRequiredStepIds.length > 0 || missingLeftRequiredStepIds.length > 0;
 
     if (templatesLoading && templates.length === 0) {
         return (
@@ -491,7 +199,7 @@ export default function Configuratiepagina() {
                     px: 0,
                 }}
             >
-                Terug naar producten
+                ← Terug naar producten
             </Button>
 
             <Paper
@@ -549,8 +257,8 @@ export default function Configuratiepagina() {
                     selectedTemplateId={rightTemplateId}
                     templates={templates}
                     configuration={visibleRightConfiguration}
-                    loading={rightConfigurationLoading}
-                    error={rightConfigurationError}
+                    loading={rightConfiguration.configurationLoading}
+                    error={rightConfiguration.configurationError}
                     selections={rightSelections}
                     invalidStepIds={validationAttempted ? missingRightRequiredStepIds : []}
                     onTemplateChange={(newTemplateId) => {
@@ -573,10 +281,15 @@ export default function Configuratiepagina() {
                     selectedTemplateId={leftTemplateId}
                     templates={templates}
                     configuration={visibleLeftConfiguration}
-                    loading={leftConfigurationLoading}
-                    error={leftConfigurationError}
+                    loading={leftConfiguration.configurationLoading}
+                    error={leftConfiguration.configurationError}
                     selections={leftSelections}
                     invalidStepIds={validationAttempted ? missingLeftRequiredStepIds : []}
+                    copyAction={{
+                        label: 'Kopieer van rechts',
+                        disabled: !hasCopyableData('right'),
+                        onClick: () => copyEarSideSelection('right', 'left'),
+                    }}
                     onTemplateChange={(newTemplateId) => {
                         setLeftTemplateId(newTemplateId);
                         setLeftSelections({});
@@ -594,7 +307,11 @@ export default function Configuratiepagina() {
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                <Button variant="contained" onClick={handleContinueToOrder}>
+                <Button
+                    variant="contained"
+                    onClick={handleContinueToOrder}
+                    disabled={!hasSelectedTemplate}
+                >
                     Bestelling afronden
                 </Button>
             </Box>
