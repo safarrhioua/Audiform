@@ -6,6 +6,10 @@ import {
 } from '../utils/orderSelectionUtils';
 import { parseJsonResponse } from '../utils/orderFormatters';
 
+const API_BASE_URL = 'https://localhost:7050';
+const ANTIFORGERY_TOKEN_ENDPOINT = `${API_BASE_URL}/api/antiforgery/token`;
+const CREATE_EARPIECE_ORDER_ENDPOINT = `${API_BASE_URL}/api/earpiece-order`;
+
 export type CreatedOrder = {
     orderId: number;
     shopOrderId: string;
@@ -27,6 +31,22 @@ interface UseCreateEarpieceOrderOptions {
     sendMethod: string;
     rightSelections: EarSelections;
     leftSelections: EarSelections;
+}
+
+async function getAntiforgeryToken(): Promise<string> {
+    const response = await fetch(ANTIFORGERY_TOKEN_ENDPOINT, {
+        method: 'GET',
+        credentials: 'include',
+    });
+
+    const responseText = await response.text();
+    const responseData = responseText ? parseJsonResponse(responseText) : null;
+
+    if (!response.ok || !responseData?.token) {
+        throw new Error('CSRF-token kon niet worden opgehaald.');
+    }
+
+    return responseData.token;
 }
 
 export function useCreateEarpieceOrder({
@@ -74,9 +94,14 @@ export function useCreateEarpieceOrder({
         try {
             setIsSubmitting(true);
 
-            const response = await fetch('https://localhost:7050/api/earpiece-order', {
+            const csrfToken = await getAntiforgeryToken();
+
+            const response = await fetch(CREATE_EARPIECE_ORDER_ENDPOINT, {
                 method: 'POST',
                 credentials: 'include',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                },
                 body: formData,
             });
 

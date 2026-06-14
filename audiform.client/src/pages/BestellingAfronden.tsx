@@ -303,7 +303,7 @@ export default function BestellingAfronden() {
                                     <TextField
                                         fullWidth
                                         size="small"
-                                        label="Referentie *"
+                                        label="Klantnummer *"
                                         value={patientNumber}
                                         onChange={(event) => setPatientNumber(event.target.value)}
                                     />
