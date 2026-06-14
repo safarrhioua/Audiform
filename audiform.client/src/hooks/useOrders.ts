@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Order } from '../types/order';
 
+
+const BASE_URL = import.meta.env.VITE_API_URL as string;
+
 export function getEffectiveStatus(order: Order): string {
     if (order.state.stateName === 'verzonden') {
         return new Date(order.deliveryDate) < new Date() ? 'afgeleverd' : 'verzonden';
@@ -12,29 +15,42 @@ export function useOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [totalCount, setTotalCount] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState<string>('');
     const [page, setPage] = useState<number>(1);
 
     const fetchOrders = useCallback((searchQuery: string, currentPage: number) => {
-        setLoading(true);
-        const url = searchQuery.trim()
-            ? `https://localhost:7050/api/orders/search?q=${encodeURIComponent(searchQuery)}`
-            : `https://localhost:7050/api/orders?page=${currentPage}&pageSize=20`;
- 
-        fetch(url, { credentials: 'include' })
-            .then(res => res.json())
-            .then(data => {
-                if (searchQuery.trim()) {
-                    const results = data as Order[];
-                    setOrders(results);
-                    setTotalCount(results.length);
-                } else {
-                    setOrders(data.items as Order[]);
-                    setTotalCount(data.totalCount);
-                }
-                setLoading(false);
-            });
-    }, []);
+    const safePage = Math.max(1, Math.floor(Number(currentPage)));
+
+    const url = searchQuery.trim()
+        ? `${BASE_URL}/api/orders/search?q=${encodeURIComponent(searchQuery)}`
+        : `${BASE_URL}/api/orders?page=${safePage}&pageSize=20`;
+
+    setLoading(true);
+    setError(null);
+
+    fetch(url, { credentials: 'include' })
+        .then(res => {
+            if (!res.ok) throw new Error(`Serverfout: ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            if (searchQuery.trim()) {
+                const results = data as Order[];
+                setOrders(results);
+                setTotalCount(results.length);
+            } else {
+                setOrders(data.items as Order[]);
+                setTotalCount(data.totalCount);
+            }
+            setLoading(false);
+        })
+        .catch(err => {
+            console.error('Fout bij ophalen orders:', err);
+            setError('Kon orders niet ophalen. Probeer het opnieuw.');
+            setLoading(false);
+        });
+}, []);
  
     const handleSetQuery = useCallback((newQuery: string) => {
         setQuery(newQuery);
@@ -48,5 +64,5 @@ export function useOrders() {
         return () => clearTimeout(timer);
     }, [query, page, fetchOrders]);
  
-    return { orders, loading, query, setQuery: handleSetQuery, page, setPage, totalCount };
+    return { orders, loading, error, query, setQuery: handleSetQuery, page, setPage, totalCount };
 }
