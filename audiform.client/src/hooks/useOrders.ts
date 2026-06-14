@@ -1,12 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Order } from '../types/order';
 
-function isOrderVisible(order: Order): boolean {
-    const oneWeekAfterDelivery = new Date(order.deliveryDate);
-    oneWeekAfterDelivery.setDate(oneWeekAfterDelivery.getDate() + 7);
-    return new Date() <= oneWeekAfterDelivery;
-}
-
 export function getEffectiveStatus(order: Order): string {
     if (order.state.stateName === 'verzonden') {
         return new Date(order.deliveryDate) < new Date() ? 'afgeleverd' : 'verzonden';
