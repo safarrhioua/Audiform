@@ -3,21 +3,21 @@ import type { Order } from '../types/order';
 
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
+    oneWeekAfterDelivery.setDate(oneWeekAfterDelivery.getDate() + 7);
+    return new Date() <= oneWeekAfterDelivery;
+}
 
 export function getEffectiveStatus(order: Order): string {
     if (order.state.stateName === 'verzonden') {
         return new Date(order.deliveryDate) < new Date() ? 'afgeleverd' : 'verzonden';
-    }
+
     return order.state.stateName;
 }
+<<<<<<<<< Temporary merge branch 1
+ 
+=========
 
-export function useOrders() {
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [totalCount, setTotalCount] = useState<number>(0);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-    const [query, setQuery] = useState<string>('');
-    const [page, setPage] = useState<number>(1);
+>>>>>>>>> Temporary merge branch 2
 
     const fetchOrders = useCallback((searchQuery: string, currentPage: number) => {
     const safePage = Math.max(1, Math.floor(Number(currentPage)));
@@ -51,6 +51,13 @@ export function useOrders() {
             setLoading(false);
         });
 }, []);
+                } else {
+                    setOrders(data.items as Order[]);
+                    setTotalCount(data.totalCount);
+                }
+                setLoading(false);
+            });
+    }, []);
  
     const handleSetQuery = useCallback((newQuery: string) => {
         setQuery(newQuery);
