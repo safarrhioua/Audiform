@@ -4,8 +4,11 @@ using Application.IRepo;
 using Application.Services;
 using Castle.Core.Smtp;
 using Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
@@ -23,18 +26,38 @@ namespace UserTests
         private readonly Mock<IConfirmationService> _mockConfirmationService;
         private readonly Mock<RoleManager<IdentityRole>> _mockRoleManager;
         private readonly Mock<IUserProfileRepository> _mockProfileRepository;
-        public UserAuth(Mock<IUserStore<ApplicationUser>> userStoreMock, Mock<RoleManager<IdentityRole>> roleManagerMock, Mock<IUserProfileRepository> profileRepositoryMock)
+        public UserAuth()
         {
-            _userStoreMock = userStoreMock;
-            _mockRoleManager = roleManagerMock;
-            _mockProfileRepository = profileRepositoryMock;
+            _userStoreMock = new Mock<IUserStore<ApplicationUser>>();
+            var roleStore = new Mock<IRoleStore<IdentityRole>>();
+
+            _mockRoleManager = new Mock<RoleManager<IdentityRole>>(
+                roleStore.Object,
+                null!, null!, null!, null!
+            );
+            _mockProfileRepository = new Mock<IUserProfileRepository>();
             _Mockusermanager = new Mock<UserManager<ApplicationUser>>(
                 _userStoreMock.Object,
                 null!, null!, null!, null!, null!, null!, null!, null!);
 
+            var contextAccessor = new Mock<IHttpContextAccessor>();
+            var claimsFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
+            var options = new Mock<IOptions<IdentityOptions>>();
+            var logger = new Mock<ILogger<SignInManager<ApplicationUser>>>();
+            var schemes = new Mock<Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider>();
+            var confirmation = new Mock<IUserConfirmation<ApplicationUser>>();
+
+            options.Setup(o => o.Value).Returns(new IdentityOptions());
+
             _mockSignInManager = new Mock<SignInManager<ApplicationUser>>(
-                _Mockusermanager.Object
-                 );
+                _Mockusermanager.Object,
+                contextAccessor.Object,
+                claimsFactory.Object,
+                options.Object,
+                logger.Object,
+                schemes.Object,
+                confirmation.Object
+            );
             _mockConfig = new Mock<IConfiguration>();
             _mockConfirmationService = new Mock<IConfirmationService>();
 
@@ -42,7 +65,6 @@ namespace UserTests
         [Fact]
         public async Task RegisterUserAsync_newuser_returnSucces()
         {
-
             _mockConfig
             .Setup(x => x["AppSettings:BackendBaseUrl"])
               .Returns("https://localhost:7050");
@@ -67,9 +89,6 @@ namespace UserTests
             .Returns(Task.CompletedTask);
 
             var authservice = new AuthService(_Mockusermanager.Object, null!, _mockConfig.Object, _mockConfirmationService.Object, _mockRoleManager.Object, _mockProfileRepository.Object);
-
-                 
-
 
 
             var newuser = new ApplicationUser
