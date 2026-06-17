@@ -12,6 +12,7 @@ public sealed class EarpieceOrderController(
     ILogger<EarpieceOrderController> logger) : ControllerBase
 {
     [HttpPost]
+    [ValidateAntiForgeryToken]
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<CreateEarpieceOrderResponse>> CreateOrder(
         [FromForm] CreateEarpieceOrderFormRequest request,

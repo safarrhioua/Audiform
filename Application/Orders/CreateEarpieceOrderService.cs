@@ -63,7 +63,7 @@ public sealed class CreateEarpieceOrderService(
                 sendMethod,
                 DateTime.UtcNow,
                 request.DeliveryDate!.Value,
-                "new"),
+                "nieuw"),
             cancellationToken);
 
         await orderRepository.AddOrderSelectionsAsync(
