@@ -424,7 +424,7 @@ export default function AccountPage() {
                 ← Terug naar startpagina
             </button>
 
-            <h1>Dashboard</h1>
+            <h1>Account</h1>
             <p className={styles.subtitle}>
                 Beheer uw persoonlijke gegevens en voorkeuren
             </p>
