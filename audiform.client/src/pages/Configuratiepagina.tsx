@@ -252,7 +252,7 @@ export default function Configuratiepagina() {
                 }}
             >
                 <EarConfigurationCard
-                    title="Rechts"
+                    title="Rechteroor"
                     titleColor="secondary.main"
                     selectedTemplateId={rightTemplateId}
                     templates={templates}

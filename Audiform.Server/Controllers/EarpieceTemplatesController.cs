@@ -26,6 +26,12 @@ public sealed class EarpieceTemplatesController(
 
             return Ok(templates);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            logger.LogInformation("Templates ophalen is geannuleerd door de client.");
+
+            return StatusCode(499);
+        }
         catch (UnauthorizedAccessException ex)
         {
             logger.LogWarning(ex, "Gebruiker is niet geautoriseerd om templates op te halen.");
@@ -60,6 +66,14 @@ public sealed class EarpieceTemplatesController(
             logger.LogInformation("Template configuratie succesvol opgehaald voor templateId {TemplateId}.", templateId);
 
             return Ok(templateConfig);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            logger.LogInformation(
+                "Template configuratie ophalen is geannuleerd door de client voor templateId {TemplateId}.",
+                templateId);
+
+            return StatusCode(499);
         }
         catch (UnauthorizedAccessException ex)
         {
