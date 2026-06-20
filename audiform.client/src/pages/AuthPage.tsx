@@ -63,12 +63,13 @@ export default function AuthPage() {
             return;
         }
 
-        localStorage.setItem("isLoggedIn", "true");
+        
 
         setIsSuccess(true);
         setLoginMessage(data.message || "Login gelukt!");
 
         const role = data.role || data.Role;
+        localStorage.setItem("role", role);
 
         setTimeout(() => {
             if (role === "ShopEmployee") {

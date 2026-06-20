@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Audiform.Server.Requests;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity.Data;
@@ -223,5 +224,23 @@ namespace Audiform.Presentation.Server.Controllers
         }
 
 
+
+        [HttpGet("check-auth")]
+        [Authorize]
+        public IActionResult CheckAuth()
+        {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return Ok(new
+                {
+                    isAuthenticated = true
+                });
+            }
+
+            return Unauthorized(new
+            {
+                isAuthenticated = false
+            });
+        }
     }
 }
