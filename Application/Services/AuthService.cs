@@ -85,7 +85,6 @@ namespace Application.Services
 
            var roleAssignResult = await _usermanager.AddToRoleAsync(user, assignedrole);
 
-            
 
             if (!roleAssignResult.Succeeded)
             {
