@@ -1,6 +1,7 @@
 import {
     Alert,
     Box,
+    Button,
     Checkbox,
     CircularProgress,
     FormControl,
@@ -33,6 +34,11 @@ interface EarConfigurationCardProps {
     error: string | null;
     selections: EarSelections;
     invalidStepIds?: number[];
+    copyAction?: {
+        label: string;
+        disabled: boolean;
+        onClick: () => void;
+    };
     onTemplateChange: (templateId: number | undefined) => void;
     onSingleSelectionChange: (step: TemplateStep, optionId: number | null) => void;
     onMultiSelectionToggle: (step: TemplateStep, option: TemplateOption) => void;
@@ -74,6 +80,7 @@ export default function EarConfigurationCard({
     error,
     selections,
     invalidStepIds = [],
+    copyAction,
     onTemplateChange,
     onSingleSelectionChange,
     onMultiSelectionToggle,
@@ -102,9 +109,30 @@ export default function EarConfigurationCard({
             }}
         >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: titleColor }}>
-                    {title}
-                </Typography>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: { xs: 'stretch', sm: 'center' },
+                        justifyContent: 'space-between',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: 1.5,
+                    }}
+                >
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: titleColor }}>
+                        {title}
+                    </Typography>
+                    {copyAction ? (
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            disabled={copyAction.disabled}
+                            onClick={copyAction.onClick}
+                            sx={{ textTransform: 'none', alignSelf: { xs: 'flex-start', sm: 'center' } }}
+                        >
+                            {copyAction.label}
+                        </Button>
+                    ) : null}
+                </Box>
 
                 <FormControl fullWidth size="small">
                     <InputLabel id={`${title}-template-label`}>Kies een oorstukje</InputLabel>

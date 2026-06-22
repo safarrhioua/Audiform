@@ -49,6 +49,19 @@ const theme = createTheme({
             fontWeight: 400,
         },
     },
-});
+        components: {
+            MuiChip: {
+                variants: [
+                    {
+                        props: { color: 'tertiary' },
+                        style: {
+                            backgroundColor: '#fabe50',
+                            color: '#000',
+                        },
+                    },
+                ],
+            },
+        },
+    });
 
 export default theme;

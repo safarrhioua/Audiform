@@ -8,11 +8,13 @@ using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Application.IRepo;
 using Infrastructure.Repos;
+using Microsoft.AspNetCore.Antiforgery;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers gebruiken voor REST API endpoints
-builder.Services.AddControllers();
+// builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -20,6 +22,16 @@ builder.Services.AddSwaggerGen();
 
 // Nodig voor UserShopContext
 builder.Services.AddHttpContextAccessor();
+
+// CSRF / antiforgery beveiliging
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.Name = "X-CSRF-TOKEN";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+});
 
 // Database + infrastructure
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -44,7 +56,7 @@ builder.Services.AddScoped<IAdressRepo, AdressRepository>();
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = ".AspNetCore.Identity.Application";
-    options.LoginPath = "/dev-login";
+    options.LoginPath = "/login";
 
     options.Events.OnRedirectToLogin = context =>
     {
@@ -86,7 +98,6 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "https://localhost:60942",
-                "http://localhost:60942",
                 "https://localhost:52914",
                 "https://localhost:52915"
             )
@@ -95,7 +106,6 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
-
 
 builder.Services.AddAuthorization();
 
@@ -116,9 +126,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseDefaultFiles();
-app.MapStaticAssets();
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -134,8 +141,16 @@ app.UseCors("ReactDevClient");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers().RequireCors("ReactDevClient");
+app.MapGet("/api/antiforgery/token", (IAntiforgery antiforgery, HttpContext context) =>
+{
+    var tokens = antiforgery.GetAndStoreTokens(context);
 
-app.MapFallbackToFile("/index.html");
+    return Results.Ok(new
+    {
+        token = tokens.RequestToken
+    });
+}).RequireAuthorization().RequireCors("ReactDevClient");
+
+app.MapControllers().RequireCors("ReactDevClient");
 
 app.Run();

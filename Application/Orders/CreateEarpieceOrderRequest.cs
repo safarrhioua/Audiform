@@ -5,6 +5,7 @@ public sealed record CreateEarpieceOrderRequest(
     string? PatientNumber,
     DateTime? DeliveryDate,
     string? Remarks,
+    string? SendMethod,
     string? SelectionsJson,
     IReadOnlyCollection<OrderUploadFile> Files);
 

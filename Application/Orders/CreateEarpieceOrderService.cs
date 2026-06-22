@@ -37,9 +37,11 @@ public sealed class CreateEarpieceOrderService(
         CancellationToken cancellationToken)
     {
         ValidateRequiredOrderFields(request);
+        OrderUploadFileValidator.Validate(request.Files);
 
         var selectionInputs = ParseSelections(request.SelectionsJson!);
         var selections = await CreateValidatedSelectionsAsync(selectionInputs, cancellationToken);
+        var sendMethod = NormalizeSendMethod(request.SendMethod);
 
         var userId = userShopContext.GetCurrentUserId();
         var shopEmployeeId = await shopEmployeeRepository.GetShopEmployeeIdByUserIdAsync(
@@ -58,9 +60,10 @@ public sealed class CreateEarpieceOrderService(
                 request.PatientName!.Trim(),
                 request.PatientNumber!.Trim(),
                 string.IsNullOrWhiteSpace(request.Remarks) ? null : request.Remarks.Trim(),
+                sendMethod,
                 DateTime.UtcNow,
                 request.DeliveryDate!.Value,
-                "new"),
+                "nieuw"),
             cancellationToken);
 
         await orderRepository.AddOrderSelectionsAsync(
@@ -68,9 +71,11 @@ public sealed class CreateEarpieceOrderService(
             selections,
             cancellationToken);
 
+        IReadOnlyList<CreateOrderFileData> storedFiles = [];
+
         if (request.Files.Count > 0)
         {
-            var storedFiles = await orderFileStorage.SaveFilesAsync(
+            storedFiles = await orderFileStorage.SaveFilesAsync(
                 orderId,
                 request.Files,
                 cancellationToken);
@@ -81,7 +86,16 @@ public sealed class CreateEarpieceOrderService(
                 cancellationToken);
         }
 
-        return new CreateEarpieceOrderResponse(orderId, $"ORD-{orderId:000}");
+        return new CreateEarpieceOrderResponse(
+            orderId,
+            $"ORD-{orderId:000}",
+            request.PatientName.Trim(),
+            request.PatientNumber.Trim(),
+            request.DeliveryDate.Value,
+            string.IsNullOrWhiteSpace(request.Remarks) ? null : request.Remarks.Trim(),
+            sendMethod,
+            storedFiles.Select(file => file.OriginalFileName).ToList(),
+            selections);
     }
 
     private static void ValidateRequiredOrderFields(CreateEarpieceOrderRequest request)
@@ -166,6 +180,23 @@ public sealed class CreateEarpieceOrderService(
 
     private static string? NullIfWhiteSpace(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string NormalizeSendMethod(string? sendMethod)
+    {
+        if (string.IsNullOrWhiteSpace(sendMethod))
+        {
+            return "physical";
+        }
+
+        var normalizedSendMethod = sendMethod.Trim().ToLowerInvariant();
+
+        if (normalizedSendMethod is not ("physical" or "digital"))
+        {
+            throw new ArgumentException("send_method must be either physical or digital.");
+        }
+
+        return normalizedSendMethod;
+    }
 
     private sealed class OrderSelectionInput
     {

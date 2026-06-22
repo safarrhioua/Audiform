@@ -5,12 +5,13 @@ import {
 import OrderStatusChip from './OrderStatusChip';
 import type { Order } from '../../types/order';
 import SecondaryButton from '../buttons/SecondaryButton';
+import { getEffectiveStatus } from '../../hooks/useOrders';
 
 interface OrdersTableProps {
   orders: Order[];
 }
 
-const columns = ['Bestelnummer', 'Klant', 'Klantnummer', 'Besteldatum', 'Leverdatum', 'Status', 'Actie',] as const;
+const columns = ['Bestelnummer', 'Klant', 'Klantnummer', 'Besteldatum', 'Leverdatum', 'Status', 'Actie'] as const;
 
 export default function OrdersTable({ orders }: OrdersTableProps) {
   return (
@@ -28,24 +29,26 @@ export default function OrdersTable({ orders }: OrdersTableProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-                  {orders.map((order) => (
-                      <TableRow key={order.id} hover>
-                          <TableCell>{order.orderNumber}</TableCell>
-                          <TableCell>{order.patientName}</TableCell>
-                          <TableCell>{order.patientNumber}</TableCell>
-                          <TableCell>{new Date(order.orderDate).toLocaleDateString('nl-NL')}</TableCell>
-                          <TableCell>{new Date(order.deliveryDate).toLocaleDateString('nl-NL')}</TableCell>
-                          <TableCell>
-                              <OrderStatusChip status={order.state.stateName} />
-                          </TableCell>
-                          <TableCell>
-                              {order.state.stateName === 'verzonden' && (
-                                  <SecondaryButton>Remake</SecondaryButton>
-                              )}
-                          </TableCell>
-                      </TableRow>
-                  )
+          {orders.map((order) => {
+            const effectiveStatus = getEffectiveStatus(order);
+            return (
+              <TableRow key={order.id} hover>
+                <TableCell>{order.orderNumber}</TableCell>
+                <TableCell>{order.patientName}</TableCell>
+                <TableCell>{order.patientNumber}</TableCell>
+                <TableCell>{new Date(order.orderDate).toLocaleDateString('nl-NL')}</TableCell>
+                <TableCell>{new Date(order.deliveryDate).toLocaleDateString('nl-NL')}</TableCell>
+                <TableCell>
+                  <OrderStatusChip status={effectiveStatus} />
+                </TableCell>
+                <TableCell>
+                  {(effectiveStatus === 'verzonden' || effectiveStatus === 'afgeleverd') && (
+                    <SecondaryButton>Remake</SecondaryButton>
                   )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TableContainer>
