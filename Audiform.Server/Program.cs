@@ -86,8 +86,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
 
-    options.SlidingExpiration = true;
-    options.ExpireTimeSpan = TimeSpan.FromHours(2);
+    options.SlidingExpiration = false;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+    options.Cookie.IsEssential = true;
 });
 
 // CORS voor React frontend

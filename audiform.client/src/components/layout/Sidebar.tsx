@@ -55,8 +55,8 @@ export default function Sidebar() {
             });
 
             if (response.ok) {
+                localStorage.removeItem("role");
                 navigate("/login");
-                localStorage.removeItem("isLoggedIn");
                 return;
             }
 

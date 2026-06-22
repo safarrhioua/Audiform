@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.37111.16 d17.14
+# Visual Studio Version 18
+VisualStudioVersion = 18.6.11828.311 oobstable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Audiform.client", "audiform.client\Audiform.client.esproj", "{433F810E-05B3-FB05-8E3B-C8FC459ABDA4}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{55B691B9-4183-466D-8183-4A1F0D9499CE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{08B0A23D-9B88-4FC1-9031-FE3FD8567312}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserTests", "UserTests\UserTests.csproj", "{B1188700-9132-E44F-A705-C642B951A026}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +51,10 @@ Global
 		{08B0A23D-9B88-4FC1-9031-FE3FD8567312}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08B0A23D-9B88-4FC1-9031-FE3FD8567312}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08B0A23D-9B88-4FC1-9031-FE3FD8567312}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1188700-9132-E44F-A705-C642B951A026}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1188700-9132-E44F-A705-C642B951A026}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1188700-9132-E44F-A705-C642B951A026}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1188700-9132-E44F-A705-C642B951A026}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
