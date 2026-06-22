@@ -12,16 +12,19 @@ public sealed class OrdersController(
     IGetOrdersService getOrdersService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<OrderDto>>> GetOrders(
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<OrderDto>>> GetOrders(
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 20,
+    CancellationToken cancellationToken = default)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
 
         try
         {
-            var orders = await getOrdersService.GetOrdersAsync(userId, cancellationToken);
-            return Ok(orders);
+            var result = await getOrdersService.GetOrdersPagedAsync(
+                userId, page, pageSize, cancellationToken);
+            return Ok(result);
         }
         catch (UnauthorizedAccessException)
         {
