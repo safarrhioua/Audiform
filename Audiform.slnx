@@ -9,17 +9,34 @@
   <Folder Name="/2. Application/">
     <Project Path="Application/Application.csproj" />
   </Folder>
-  <Folder Name="/2. Application/Orders/" />
+  <Folder Name="/2. Application/Orders/">
+    <File Path="Application/Orders/CreateEarpieceOrderRequest.cs" />
+    <File Path="Application/Orders/CreateEarpieceOrderResponse.cs" />
+    <File Path="Application/Orders/CreateEarpieceOrderService.cs" />
+    <File Path="Application/Orders/CreateOrderData.cs" />
+    <File Path="Application/Orders/CreateOrderFileData.cs" />
+    <File Path="Application/Orders/CreateOrderSelectionData.cs" />
+    <File Path="Application/Orders/GetEmployeeOrdersService.cs" />
+    <File Path="Application/Orders/GetOrdersService.cs" />
+    <File Path="Application/Orders/ICreateEarpieceOrderService.cs" />
+    <File Path="Application/Orders/IGetOrdersService.cs" />
+    <File Path="Application/Orders/OrderDto.cs" />
+    <File Path="Application/Orders/OrderUploadFileValidator.cs" />
+    <File Path="Application/Orders/PagedResult.cs" />
+    <File Path="Application/Orders/UpdateOrderStatusService.cs" />
+    <File Path="GetEmployeeOrdersService.cs" />
+    <File Path="UpdateOrderStatusService.cs" />
+  </Folder>
   <Folder Name="/3. Domain/">
     <Project Path="Domain/Domain.csproj" />
   </Folder>
   <Folder Name="/4. Infrastructure/">
     <Project Path="Infrastructure/Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/Storage/" />
+  <Folder Name="/Storage/orders/" />
   <Project Path="UnitTests/UnitTests.csproj" Id="5c820a9c-6a68-42e6-90ac-7d6c8c4aa521">
     <Build Solution="Debug|*" Project="false" />
   </Project>
   <Project Path="UserTests/UserTests.csproj" />
-  <Folder Name="/Storage/" />
-  <Folder Name="/Storage/orders/" />
 </Solution>

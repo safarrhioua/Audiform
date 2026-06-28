@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Application.IRepo;
 using Infrastructure.Repos;
 using Microsoft.AspNetCore.Antiforgery;
+using Application.Orders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +52,9 @@ builder.Services.AddScoped<IUserManagement, UserManagement>();
 builder.Services.AddScoped<IUserProfileRepository, UserRepo>();
 builder.Services.AddScoped<IAdressManagement, AdressManagement>();
 builder.Services.AddScoped<IAdressRepo, AdressRepository>();
+// Employee order services
+builder.Services.AddScoped<IGetEmployeeOrdersService, GetEmployeeOrdersService>();
+builder.Services.AddScoped<IUpdateOrderStatusService, UpdateOrderStatusService>();
 
 // Cookie authentication voor API
 builder.Services.ConfigureApplicationCookie(options =>

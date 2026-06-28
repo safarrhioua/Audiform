@@ -6,6 +6,10 @@ export type OrderStatus =
   | 'verzonden'
   | 'afgeleverd'  
   | 'geannuleerd'
+  | 'traditioneel'
+  | '3D print'
+  | 'afgewezen'
+
 
 export interface OrderState {
   id: number;
