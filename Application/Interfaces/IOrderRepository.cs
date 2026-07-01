@@ -35,4 +35,10 @@ public interface IOrderRepository
         string userId, string query, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Order> Orders, int TotalCount)> GetOrdersByUserPagedAsync(
     string userId, int page, int pageSize, DateTime cutoffDate, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Order>> GetAllOrdersForEmployeeAsync(
+        CancellationToken cancellationToken = default);
+
+    Task UpdateOrderStatusAsync(
+        int orderId, string newStatus, CancellationToken cancellationToken = default);
 }
